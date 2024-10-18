@@ -2,6 +2,8 @@
 
 import numpy as np
 from scipy.spatial import Delaunay
+import path
+import chem_utils
 
 class QAgent:
     def __init__(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1):
@@ -66,7 +68,9 @@ class SimulatedEnvironment:
     
     def get_readings(self):
         # Mock-up function, should return state readings from the environment
-        return np.random.choice([0, 1, 2], size=3)
+        chemical_file_path = f"../1c_co2_medium/SMART-AUVs_OF-June-1c-0002.nc"
+        chemical_dataset = chem_utils.load_chemical_dataset(chemical_file_path)
+        # return np.random.choice([0, 1, 2], size=3)
 
     def perform_action(self, action):
         # Mock-up function, should execute the action and return next state and reward
