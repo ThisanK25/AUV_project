@@ -113,11 +113,11 @@ class SimulatedEnvironment:
             right_pos = (self.x, self.y + steps, self.z)
 
         # Extract actual pH values (not classified)
-        front_pH = self._get_pH_at_position(front_pos, time_target)
-        left_pH = self._get_pH_at_position(left_pos, time_target)
         right_pH = self._get_pH_at_position(right_pos, time_target)
+        left_pH = self._get_pH_at_position(left_pos, time_target)
+        front_pH = self._get_pH_at_position(front_pos, time_target)
 
-        return front_pH, left_pH, right_pH
+        return right_pH, left_pH, front_pH
 
     def get_reading_levels(self):
         """
@@ -127,14 +127,14 @@ class SimulatedEnvironment:
         - 1 if 7.5 <= pH <= 7.77 (neutral)
         The readings are taken for the front, left, and right directions, based on the agent's heading.
         """
-        front_pH, left_pH, right_pH = self.get_current_pH_values()
+        right_pH, left_pH, front_pH = self.get_current_pH_values()
 
         # Classify the pH values into discrete states
-        front_state = self._classify_pH(front_pH)
-        left_state = self._classify_pH(left_pH)
         right_state = self._classify_pH(right_pH)
+        left_state = self._classify_pH(left_pH)
+        front_state = self._classify_pH(front_pH)
 
-        return front_state, left_state, right_state
+        return right_state, left_state, front_state
 
     def _get_pH_at_position(self, position, time_target):
         """
