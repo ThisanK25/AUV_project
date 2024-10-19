@@ -57,7 +57,7 @@ class QAgent:
             
             for step in range(max_steps_per_episode):
                 # Extract pH readings from the state (assuming the state contains discrete pH states)
-                right_pH, left_pH, front_pH = env.get_current_pH_levels()
+                right_pH, left_pH, front_pH = env.get_current_pH_values()
 
                 # Update the minimum pH encountered
                 min_pH = min(min_pH, right_pH, left_pH, front_pH)
