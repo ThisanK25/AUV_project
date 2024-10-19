@@ -203,10 +203,10 @@ class SimulatedEnvironment:
             if self.x + 1 < 250:
                 self.x += 1  # Move right in x-axis
         elif self.heading == 'south':
-            if self.x > 0:
+            if self.y > 0:
                 self.y -= 1  # Move down in y-axis
         elif self.heading == 'west':
-            if self.y > 0:
+            if self.x > 0:
                 self.x -= 1  # Move left in x-axis
 
     def is_done(self):
