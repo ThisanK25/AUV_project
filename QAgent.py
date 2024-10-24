@@ -4,6 +4,7 @@ from scipy.spatial import Delaunay
 import path
 import chem_utils
 from time import perf_counter
+import matplotlib.pyplot as plt
 
 class QAgent:
     def __init__(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1):
@@ -82,7 +83,7 @@ class QAgent:
                 state = next_state
             
             # At the end of the episode, print the minimum pH found
-            print(f"---------------Episode {episode+1}/{episodes} completed.--------------")
+            print(f"-------------------Episode {episode+1}/{episodes} completed.------------------")
             print(f"Minimum pH found: {min_pH:.2f}\n")
             print(" State:         H  M  L                        H  M  L")
             print(f"Current state: {state}          Next state: {next_state}\n")
@@ -317,6 +318,64 @@ class Environment_interaction:
         # To be determined
         return False
     
+class QAgentSimulator:
+    def __init__(self, environment, q_table):
+        self.env = environment
+        self.q_table = q_table
+        self.state = self.env.get_reading_levels()
+        self.position_history = []
+        self.pH_readings_history = []
+
+    def simulate(self, max_steps=100):
+        self.position_history.append((self.env.x, self.env.y))
+        self.pH_readings_history.append(self.env.get_current_pH_values())
+
+        for _ in range(max_steps):
+            action = self.choose_action(self.state)
+            next_state = self.env.perform_action(action)
+            self.position_history.append((self.env.x, self.env.y))
+            self.pH_readings_history.append(self.env.get_current_pH_values())
+            self.state = next_state
+
+    def choose_action(self, state):
+        state_action_values = self.q_table[state]
+        max_value = np.max(state_action_values)
+        actions_with_max_value = np.where(state_action_values == max_value)[0]
+        return np.random.choice(actions_with_max_value)
+
+    def plot_pH_readings_over_time(self):
+        # Plots the environment:
+        
+        # Plot agent's path
+        x_coords, y_coords = zip(*self.position_history)
+
+        plt.figure(figsize=(10, 8))
+        plt.plot(x_coords, y_coords, marker='o')
+        plt.title('Agent Path')
+        plt.xlabel('X Coordinate')
+        plt.ylabel('Y Coordinate')
+        plt.grid(True)
+        
+        for i, (x, y) in enumerate(self.position_history):
+            plt.annotate(f'{i}', (x, y))
+
+        plt.show()
+
+        # Plot agent's pH readings over time
+        right_pH, left_pH, front_pH = zip(*self.pH_readings_history)
+        
+        plt.figure(figsize=(10, 8))
+        plt.plot(right_pH, label='Right pH')
+        plt.plot(left_pH, label='Left pH')
+        plt.plot(front_pH, label='Front pH')
+        plt.title('pH Readings Over Time')
+        plt.xlabel('Time Step')
+        plt.ylabel('pH Value')
+        plt.legend()
+        plt.grid(True)
+        
+        plt.show()
+    
 
 # Simulation setup
 
@@ -329,7 +388,7 @@ x_bounds = (100, 250)
 y_bounds = (100, 200)
 
 env = Environment_interaction(f"../SMART-AUVs_OF-June-1c-0002.nc", x_start, y_start, z_start)
-conf_env = Environment_interaction("../SMART-AUVs_OF-June-1c-0002.nc", x_start, y_start, z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
+conf_env = Environment_interaction("../SMART-AUVs_OF-June-1c-0002.nc", np.random.randint(x_bounds[0], x_bounds[1]), np.random.randint(y_bounds[0], y_bounds[1]), z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
 
 
 # %%
@@ -360,3 +419,15 @@ agent = QAgent()
 agent.set_reward_function(agent.reward_plume_field)
 print("Training with reward function 3: Plume field and gas reading reward")
 agent.train(env, episodes=100)
+
+
+# %%
+
+simulator = QAgentSimulator(conf_env, agent.q_table)
+
+# Run the simulation
+simulator.simulate(max_steps=100)
+
+# Plot the behavior of the agent
+simulator.plot_pH_readings_over_time()
+# %%
