@@ -83,7 +83,7 @@ class QAgent:
                 state = next_state
             
             # At the end of the episode, print the minimum pH found
-            print(f"-------------------Episode {episode+1}/{episodes} completed.------------------")
+            print(f"--------------------Episode {episode+1}/{episodes} completed.------------------")
             print(f"Minimum pH found: {min_pH:.2f}\n")
             print(" State:         H  M  L                        H  M  L")
             print(f"Current state: {state}          Next state: {next_state}\n")
@@ -343,92 +343,71 @@ class QAgentSimulator:
         actions_with_max_value = np.where(state_action_values == max_value)[0]
         return np.random.choice(actions_with_max_value)
 
-    def plot_behavior(self):
-        # Plots the environment:
+    def plot_behavior(self, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False):
         plt.rcParams.update({
             "text.usetex": False,  # Disable external LaTeX usage
             "font.family": "Dejavu Serif",  # Use a serif font that resembles LaTeX's default
             "mathtext.fontset": "dejavuserif"  # Use DejaVu Serif font for mathtext, similar to LaTeX fonts
         })
 
-        # File path to the chemical data NetCDF file
-        chemical_file_path = "../SMART-AUVs_OF-June-1c-0002.nc"
+        # Load chemical dataset
         chemical_dataset = chem_utils.load_chemical_dataset(chemical_file_path)
 
-        # Define target coordinates and parameters for volume extraction
-        x_target = 100
-        y_target = 100
-        z_target = 69
-        time_target = 7
-        radius = 4
-        metadata = x_target, y_target, z_target, time_target, radius
-        # data_parameter = 'pCO2'
-        data_parameter = 'pH'
-
-        # Extract chemical data and compute average value within the specified volume
-        chemical_volume_data_mean, data_within_radius = cu.extract_chemical_data_for_volume(
-            chemical_dataset, metadata, data_parameter
-        )
-
-        # Read and plot depths from dataset
-
-        val_dataset = chemical_dataset[data_parameter].isel(time=time_target, siglay=env.z)
+        # Extract data to plot the environment
+        val_dataset = chemical_dataset[data_parameter].isel(time=time_target, siglay=z_target)
         val = val_dataset.values[:72710]
         x = val_dataset['x'].values[:72710]
         y = val_dataset['y'].values[:72710]
         x = x - x.min()
         y = y - y.min()
-        fig, ax = plt.subplots(figsize=(8, 6))
-        scatter = ax.scatter(x, y, c=val, cmap='coolwarm', s=2)
+
+        # Plot environment and agent's path on the same axes
+        fig, ax = plt.subplots(figsize=(12, 8))
+
+        scatter = ax.scatter(x, y, c=val, cmap='coolwarm', s=2, alpha=0.6, label='Chemical Environment')
         cbar = fig.colorbar(scatter, ax=ax)
-        cbar.set_label('Value')
+        cbar.set_label(f'{data_parameter} Value')
+
+        x_coords, y_coords = zip(*self.position_history)
+        ax.plot(x_coords, y_coords, marker='o', color='black', label='Agent Path')
+
+        for i, (x_pos, y_pos) in enumerate(self.position_history):
+            ax.annotate(f'{i}', (x_pos, y_pos))
+
+        if zoom:
+            # Calculate bounds
+            x_min, x_max = min(x_coords), max(x_coords)
+            y_min, y_max = min(y_coords), max(y_coords)
+            padding_x = (x_max - x_min) * 0.1
+            padding_y = (y_max - y_min) * 0.1
+
+            # Set plot limits
+            ax.set_xlim(x_min - padding_x, x_max + padding_x)
+            ax.set_ylim(y_min - padding_y, y_max + padding_y)
 
         # Add labels and title
         ax.set_xlabel('Easting [m]')
         ax.set_ylabel('Northing [m]')
-        # Plot agent's path
-        x_coords, y_coords = zip(*self.position_history)
-
-        plt.figure(figsize=(10, 8))
-        plt.plot(x_coords, y_coords, marker='o')
-        plt.title('Agent Path')
-        #plt.xlabel('X Coordinate')
-        #plt.ylabel('Y Coordinate')
+        plt.title('Agent Path with Chemical Environment')
         plt.grid(True)
-        
-        for i, (x, y) in enumerate(self.position_history):
-            plt.annotate(f'{i}', (x, y))
-
-        plt.show()
-
-        # Plot agent's pH readings over time
-        right_pH, left_pH, front_pH = zip(*self.pH_readings_history)
-        
-        plt.figure(figsize=(10, 8))
-        plt.plot(right_pH, label='Right pH')
-        plt.plot(left_pH, label='Left pH')
-        plt.plot(front_pH, label='Front pH')
-        plt.title('pH Readings Over Time')
-        plt.xlabel('Time Step')
-        plt.ylabel('pH Value')
         plt.legend()
-        plt.grid(True)
-        
+
         plt.show()
+       
     
 
 # Simulation setup
-
+chemical_file_path = "../SMART-AUVs_OF-June-1c-0002.nc"
 x_start = np.random.randint(0, 250)
 y_start = np.random.randint(0, 250)
 z_start = 68
 
 # Set boundaries for the confined environment
-x_bounds = (100, 250)
-y_bounds = (100, 200)
+x_bounds = (130, 175)
+y_bounds = (120, 160)
 
-env = Environment_interaction(f"../SMART-AUVs_OF-June-1c-0002.nc", x_start, y_start, z_start)
-conf_env = Environment_interaction("../SMART-AUVs_OF-June-1c-0002.nc", np.random.randint(x_bounds[0], x_bounds[1]), np.random.randint(y_bounds[0], y_bounds[1]), z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
+env = Environment_interaction(chemical_file_path, x_start, y_start, z_start)
+conf_env = Environment_interaction(chemical_file_path, np.random.randint(x_bounds[0], x_bounds[1]), np.random.randint(y_bounds[0], y_bounds[1]), z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
 
 
 # %%
@@ -436,7 +415,7 @@ print("Training with confined environment")
 agent = QAgent()
 agent.set_reward_function(agent.reward_gas_level)
 print("Training with reward function 1: High gas reading reward")
-agent.train(conf_env, episodes=100)
+agent.train(conf_env, episodes=10)
 
 
 # %%
@@ -462,12 +441,60 @@ agent.train(env, episodes=100)
 
 
 # %%
-
 simulator = QAgentSimulator(conf_env, agent.q_table)
-
 # Run the simulation
 simulator.simulate(max_steps=100)
-
 # Plot the behavior of the agent
-simulator.plot_behavior()
+simulator.plot_behavior(
+        chemical_file_path=chemical_file_path,
+        time_target=7,
+        z_target=z_start,
+        data_parameter='pH',
+        zoom=True)
 # %%
+
+class RunAndSimulate:
+    def __init__(self, chem_data_path):
+        
+        self.agent = None
+        self.env = None
+        self.sim = None
+
+        # Agent parameters:
+        self.q_table_shape = (3, 3, 3, 3) 
+        self.alpha = 0.1 
+        self.gamma = 0.9 
+        self.epsilon = 0.1
+
+        # Environment paramters:
+        self.chem_data_path = chem_data_path
+        self.x_start = None
+        self.y_start = None 
+        self.z_start = None 
+        self.confined=False 
+        self.x_bounds=(0, 250) 
+        self.y_bounds=(0, 250)
+
+        # Simulation parameters:
+        self.time_target 
+        self.z_target 
+        self.data_parameter='pH' 
+        self.zoom=False
+
+    def set_Agent(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1):
+        self.q_table_shape = q_table_shape
+        self.alpha = alpha 
+        self.gamma = gamma 
+        self.epsilon = epsilon
+        self.agent = 
+    
+    def set_Environment(self, x_start, y_start, z_start=0, confined=False, x_bounds=(0, 250), y_bounds=(0, 250)):
+        self.x_start  = x_start
+        self.y_start  = y_start 
+        self.z_start  = z_start 
+        self.confined = confined 
+        self.x_bounds = x_bounds 
+        self.y_bounds = y_bounds
+    
+    def set_QAgentSimulator(self, environment, q_table):
+
