@@ -26,7 +26,7 @@ def load_chemical_dataset(chem_data_path):
     warnings.filterwarnings("ignore", category=SerializationWarning)
 
     # Load the NetCDF file
-    chem_dataset = xr.open_dataset(chem_data_path, decode_times=False)
+    chem_dataset = xr.open_dataset(chem_data_path, decode_times=False, drop_variables={"siglay", "siglev"})
 
     # Fix time issue by converting ITIME to actual timestamps
     time_reference = pd.Timestamp("1970-01-01")

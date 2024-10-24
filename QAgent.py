@@ -86,6 +86,7 @@ class QAgent:
             print(f"Minimum pH found: {min_pH:.2f}\n")
             print(" State:         H  M  L                        H  M  L")
             print(f"Current state: {state}          Next state: {next_state}\n")
+            print(f"Position: x:{env.x}, y: {env.y}, z: {env.z}")
             print(f"Time to complete episode: {perf_counter() - start:.2f} seconds.")
             print(f"Reward: {reward}\n")
             print("-------------------------------------------------------------")
@@ -141,15 +142,18 @@ class QAgent:
     
 # Example usage
 class Environment_interaction:
-    def __init__(self, chem_data_path, x_start, y_start, z_start=0):
+    def __init__(self, chem_data_path, x_start, y_start, z_start=0, confined=False, x_bounds=(0, 250), y_bounds=(0, 250)):
         self.chemical_dataset = chem_utils.load_chemical_dataset(chem_data_path)
         
         # Initialize the agent's position and heading
         self.x = x_start
         self.y = y_start
-        self.z = z_start  # Default depth or height, if applicable
-        self.radius_of_gas_reading = 5  # The radius of the area that the agent collects readings from
-        self.heading = 'north'  # Initial heading of the agent (can be north, south, east, west)
+        self.z = z_start                    # Default depth or height, if applicable
+        self.radius_of_gas_reading = 5      # The radius of the area that the agent collects readings from
+        self.heading = 'north'              # Initial heading of the agent (can be north, south, east, west)
+        self.confined = confined            # Whether the agent is confined to a specific area
+        self.x_min, self.x_max = x_bounds
+        self.y_min, self.y_max = y_bounds
 
     def get_current_pH_values(self):
         """
@@ -281,39 +285,60 @@ class Environment_interaction:
         next_state = self.get_reading_levels()
         return next_state
 
+    # def _move_forward(self):
+    #     """
+    #     Move forward one step in the direction the agent is currently facing.
+    #     """
+    #     # Move based on the current heading
+    #     if self.heading == 'north':
+    #         if self.y + 1 < 250:
+    #             self.y += 1  # Move up in y-axis
+    #     elif self.heading == 'east':
+    #         if self.x + 1 < 250:
+    #             self.x += 1  # Move right in x-axis
+    #     elif self.heading == 'south':
+    #         if self.y > 0:
+    #             self.y -= 1  # Move down in y-axis
+    #     elif self.heading == 'west':
+    #         if self.x > 0:
+    #             self.x -= 1  # Move left in x-axis
+
     def _move_forward(self):
-        """
-        Move forward one step in the direction the agent is currently facing.
-        """
-        # Move based on the current heading
-        if self.heading == 'north':
-            if self.y + 1 < 250:
-                self.y += 1  # Move up in y-axis
-        elif self.heading == 'east':
-            if self.x + 1 < 250:
-                self.x += 1  # Move right in x-axis
-        elif self.heading == 'south':
-            if self.y > 0:
-                self.y -= 1  # Move down in y-axis
-        elif self.heading == 'west':
-            if self.x > 0:
-                self.x -= 1  # Move left in x-axis
+        if self.heading == 'north' and (not self.confined or self.y + 1 <= self.y_max):
+            self.y += 1  # Move up in y-axis
+        elif self.heading == 'east' and (not self.confined or self.x + 1 <= self.x_max):
+            self.x += 1  # Move right in x-axis
+        elif self.heading == 'south' and (not self.confined or self.y - 1 >= self.y_min):
+            self.y -= 1  # Move down in y-axis
+        elif self.heading == 'west' and (not self.confined or self.x - 1 >= self.x_min):
+            self.x -= 1  # Move left in x-axis
 
     def is_done(self):
         # To be determined
         return False
+    
 
 # Simulation setup
-# x_start = 72710  # Starts in the plume
-# y_start = 72710  # Start in the plume 
+
 x_start = np.random.randint(0, 250)
 y_start = np.random.randint(0, 250)
-
 z_start = 68
 
-env = Environment_interaction(f"../SMART-AUVs_OF-June-1c-0002.nc", x_start, y_start, z_start)
+# Set boundaries for the confined environment
+x_bounds = (100, 250)
+y_bounds = (100, 200)
 
-# Show usage with different reward functions
+env = Environment_interaction(f"../SMART-AUVs_OF-June-1c-0002.nc", x_start, y_start, z_start)
+conf_env = Environment_interaction("../SMART-AUVs_OF-June-1c-0002.nc", x_start, y_start, z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
+
+
+# %%
+print("Training with confined environment")
+agent = QAgent()
+agent.set_reward_function(agent.reward_gas_level)
+print("Training with reward function 1: High gas reading reward")
+agent.train(conf_env, episodes=100)
+
 
 # %%
 # High reward for high gas reading, medium reward for medium reading, negative for low reading
