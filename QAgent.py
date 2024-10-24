@@ -107,7 +107,7 @@ class QAgent:
             if not self.found_gas:
                 return 0
             else:
-                return -10
+                return -1
         else:
             self.found_gas = True
             return 5  # Medium gas reading
@@ -132,7 +132,7 @@ class QAgent:
         right, left, front = next_state
         min_pH = min(next_state)
         if right == 0 and left == 0 and front == 0:
-            return -10  # Outside plume
+            return -1  # Outside plume
         reward = 0
         # Adjust reward based on gas readings
         if min_pH == 2:
@@ -343,17 +343,57 @@ class QAgentSimulator:
         actions_with_max_value = np.where(state_action_values == max_value)[0]
         return np.random.choice(actions_with_max_value)
 
-    def plot_pH_readings_over_time(self):
+    def plot_behavior(self):
         # Plots the environment:
-        
+        plt.rcParams.update({
+            "text.usetex": False,  # Disable external LaTeX usage
+            "font.family": "Dejavu Serif",  # Use a serif font that resembles LaTeX's default
+            "mathtext.fontset": "dejavuserif"  # Use DejaVu Serif font for mathtext, similar to LaTeX fonts
+        })
+
+        # File path to the chemical data NetCDF file
+        chemical_file_path = "../SMART-AUVs_OF-June-1c-0002.nc"
+        chemical_dataset = chem_utils.load_chemical_dataset(chemical_file_path)
+
+        # Define target coordinates and parameters for volume extraction
+        x_target = 100
+        y_target = 100
+        z_target = 69
+        time_target = 7
+        radius = 4
+        metadata = x_target, y_target, z_target, time_target, radius
+        # data_parameter = 'pCO2'
+        data_parameter = 'pH'
+
+        # Extract chemical data and compute average value within the specified volume
+        chemical_volume_data_mean, data_within_radius = cu.extract_chemical_data_for_volume(
+            chemical_dataset, metadata, data_parameter
+        )
+
+        # Read and plot depths from dataset
+
+        val_dataset = chemical_dataset[data_parameter].isel(time=time_target, siglay=env.z)
+        val = val_dataset.values[:72710]
+        x = val_dataset['x'].values[:72710]
+        y = val_dataset['y'].values[:72710]
+        x = x - x.min()
+        y = y - y.min()
+        fig, ax = plt.subplots(figsize=(8, 6))
+        scatter = ax.scatter(x, y, c=val, cmap='coolwarm', s=2)
+        cbar = fig.colorbar(scatter, ax=ax)
+        cbar.set_label('Value')
+
+        # Add labels and title
+        ax.set_xlabel('Easting [m]')
+        ax.set_ylabel('Northing [m]')
         # Plot agent's path
         x_coords, y_coords = zip(*self.position_history)
 
         plt.figure(figsize=(10, 8))
         plt.plot(x_coords, y_coords, marker='o')
         plt.title('Agent Path')
-        plt.xlabel('X Coordinate')
-        plt.ylabel('Y Coordinate')
+        #plt.xlabel('X Coordinate')
+        #plt.ylabel('Y Coordinate')
         plt.grid(True)
         
         for i, (x, y) in enumerate(self.position_history):
@@ -429,5 +469,5 @@ simulator = QAgentSimulator(conf_env, agent.q_table)
 simulator.simulate(max_steps=100)
 
 # Plot the behavior of the agent
-simulator.plot_pH_readings_over_time()
+simulator.plot_behavior()
 # %%
