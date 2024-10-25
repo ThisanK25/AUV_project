@@ -132,6 +132,7 @@ class QAgent:
                 state = next_state
             
             # At the end of the episode, print the minimum pH found
+            print(f"--------------------Episode {episode+1}/{episodes} completed.------------------")
             print(f"Episode {episode+1}/{episodes} completed.")
             print(f"Minimum pH found: {min_pH:.2f}\n")
             print("Current state: ", state, " Next state: ", next_state)
@@ -481,7 +482,13 @@ def test_confined_gas_level_reward():
     y_bounds = (120, 160)
 
     conf_env = Environment_interaction(chemical_file_path, np.random.randint(x_bounds[0], x_bounds[1]), np.random.randint(y_bounds[0], y_bounds[1]), z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
-
+    
+    print("Training with confined environment")
+    agent = QAgent()
+    agent.set_reward_function(agent.reward_gas_level)
+    print("Training with reward function 1: High gas reading reward")
+    agent.train(conf_env, episodes=10)
+    
     simulator = QAgentSimulator(conf_env, agent)
     # Run the simulation
     simulator.simulate(max_steps=100)
@@ -499,74 +506,75 @@ def test_confined_gas_level_reward():
             data_parameter='pH',
             zoom=False)
     
+#%%
+test_confined_gas_level_reward()
+
+# # %%
+# print("Training with confined environment")
+# agent = QAgent()
+# agent.set_reward_function(agent.reward_gas_level)
+# print("Training with reward function 1: High gas reading reward")
+# agent.train(conf_env, episodes=10)
 
 
-# %%
-print("Training with confined environment")
-agent = QAgent()
-agent.set_reward_function(agent.reward_gas_level)
-print("Training with reward function 1: High gas reading reward")
-agent.train(conf_env, episodes=10)
+# ## ---------------------------- Train - Run - Simulate ------------------------------------
+# chemical_file_path = "../SMART-AUVs_OF-June-1c-0002.nc"
+# x_start = np.random.randint(0, 250)
+# y_start = np.random.randint(0, 250)
+# z_start = 68
+
+# # Set boundaries for the confined environment
+# x_bounds = (130, 175)
+# y_bounds = (120, 160)
+
+# env = Environment_interaction(chemical_file_path, x_start, y_start, z_start)
+# conf_env = Environment_interaction(chemical_file_path, np.random.randint(x_bounds[0], x_bounds[1]), np.random.randint(y_bounds[0], y_bounds[1]), z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
 
 
-## ---------------------------- Train - Run - Simulate ------------------------------------
-chemical_file_path = "../SMART-AUVs_OF-June-1c-0002.nc"
-x_start = np.random.randint(0, 250)
-y_start = np.random.randint(0, 250)
-z_start = 68
-
-# Set boundaries for the confined environment
-x_bounds = (130, 175)
-y_bounds = (120, 160)
-
-env = Environment_interaction(chemical_file_path, x_start, y_start, z_start)
-conf_env = Environment_interaction(chemical_file_path, np.random.randint(x_bounds[0], x_bounds[1]), np.random.randint(y_bounds[0], y_bounds[1]), z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
+# # %%
+# print("Training with confined environment")
+# agent = QAgent()
+# agent.set_reward_function(agent.reward_gas_level)
+# print("Training with reward function 1: High gas reading reward")
+# agent.train(conf_env, episodes=10)
 
 
-# %%
-print("Training with confined environment")
-agent = QAgent()
-agent.set_reward_function(agent.reward_gas_level)
-print("Training with reward function 1: High gas reading reward")
-agent.train(conf_env, episodes=10)
+# # %%
+# # High reward for high gas reading, medium reward for medium reading, negative for low reading
+# agent = QAgent()
+# agent.set_reward_function(agent.reward_gas_level)
+# print("Training with reward function 1: High gas reading reward")
+# agent.train(env, episodes=100)
+
+# # %%
+# # The longer the agent is exposed to high or medium gas reading, the higher the reward
+# agent = QAgent()
+# agent.set_reward_function(agent.reward_exposure_time)
+# print("Training with reward function 2: Exposure time reward")
+# agent.train(env, episodes=100)
+
+# # %%
+# # If the agent exits the field of plume the reward is negative, if it is in the plume it is positive, and if the gas reading gets higher (or lower pH-value) the reward gets higher
+# agent = QAgent()
+# agent.set_reward_function(agent.reward_plume_field)
+# print("Training with reward function 3: Plume field and gas reading reward")
+# agent.train(env, episodes=100)
 
 
-# %%
-# High reward for high gas reading, medium reward for medium reading, negative for low reading
-agent = QAgent()
-agent.set_reward_function(agent.reward_gas_level)
-print("Training with reward function 1: High gas reading reward")
-agent.train(env, episodes=100)
-
-# %%
-# The longer the agent is exposed to high or medium gas reading, the higher the reward
-agent = QAgent()
-agent.set_reward_function(agent.reward_exposure_time)
-print("Training with reward function 2: Exposure time reward")
-agent.train(env, episodes=100)
-
-# %%
-# If the agent exits the field of plume the reward is negative, if it is in the plume it is positive, and if the gas reading gets higher (or lower pH-value) the reward gets higher
-agent = QAgent()
-agent.set_reward_function(agent.reward_plume_field)
-print("Training with reward function 3: Plume field and gas reading reward")
-agent.train(env, episodes=100)
-
-
-# %%
-simulator = QAgentSimulator(conf_env, agent)
-# Run the simulation
-simulator.simulate(max_steps=100)
-# Plot the behavior of the agent
-simulator.plot_behavior(
-        chemical_file_path=chemical_file_path,
-        time_target=7,
-        z_target=z_start,
-        data_parameter='pH',
-        zoom=True)
-simulator.plot_behavior(
-        chemical_file_path=chemical_file_path,
-        time_target=7,
-        z_target=z_start,
-        data_parameter='pH',
-        zoom=False)
+# # %%
+# simulator = QAgentSimulator(conf_env, agent)
+# # Run the simulation
+# simulator.simulate(max_steps=100)
+# # Plot the behavior of the agent
+# simulator.plot_behavior(
+#         chemical_file_path=chemical_file_path,
+#         time_target=7,
+#         z_target=z_start,
+#         data_parameter='pH',
+#         zoom=True)
+# simulator.plot_behavior(
+#         chemical_file_path=chemical_file_path,
+#         time_target=7,
+#         z_target=z_start,
+#         data_parameter='pH',
+#         zoom=False)
