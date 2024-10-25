@@ -5,6 +5,7 @@ import path
 import chem_utils
 from time import perf_counter
 import matplotlib.pyplot as plt
+import lawnmower_path as lp
 
 class QAgent:
     def __init__(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1):
@@ -15,12 +16,16 @@ class QAgent:
         self.possible_states = np.array([0, 1, 2])  # 0: High, 1: Medium, 2: Low
         self.possible_actions = np.array([0, 1, 2])  # 0: Right, 1: Left, 2: Forward
         
-        # ---- Variables for reward -----
-        self.found_gas = False
+        # Variables for reward
         self.time_steps_in_high = 0
         self.time_steps_in_medium = 0
         self.reward_function = self.reward_gas_level  # Default reward function
-        # -------------------------------
+        
+        # Tracking the sequence of actions to highest plume reading
+        self.highest_plume_actions = []
+        self.highest_plume_position = None
+        self.highest_plume_pH = float('inf')
+        self.current_actions = []
 
     def set_reward_function(self, reward_function):
         self.reward_function = reward_function
@@ -53,12 +58,53 @@ class QAgent:
     def execute_action(self, env, action):
         """Execute the chosen action in the environment and get the feedback."""
         next_state = env.perform_action(action)
+        self.current_actions.append(action)
         return next_state
-    
+
+    def update_highest_plume(self, env, pH_values):
+        """Update the highest plume (lowest pH) found and sequence of actions"""
+        min_pH = min(pH_values)
+        if min_pH < self.highest_plume_pH:
+            self.highest_plume_pH = min_pH
+            self.highest_plume_position = (env.x, env.y, env.z)
+            self.highest_plume_actions = list(self.current_actions)  # Copy current actions
+
+    def perform_lawnmower_pattern(self, env, width=10, min_turn_radius=10, direction='y'):
+        """
+        Perform the lawnmower pattern and update the Q-table during initial exploration.
+        """
+        # Generate waypoints for the lawnmower pattern
+        x_data = np.linspace(env.x_min, env.x_max, 100)
+        y_data = np.linspace(env.y_min, env.y_max, 100)
+        waypoints, _, _, _ = lp.generate_lawnmower_waypoints(x_data, y_data, width, min_turn_radius, env.z, direction)
+
+        # Perform the lawnmower pattern
+        for x, y, z in waypoints:
+            env.x, env.y, env.z = x, y, z
+            pH_readings = env.get_current_pH_values()
+            state = self.get_state_from_env(env)
+            
+            # Choose the next action (forward in this case for simplicity)
+            action = 2  # Forward
+            next_state = self.execute_action(env, action)
+            
+            # Evaluate reward using the selected reward function
+            reward = self.reward_function(next_state)
+            
+            self.update_q_table(state, action, reward, next_state)
+            self.update_highest_plume(env, pH_readings)
+
     def train(self, env, episodes=1000, max_steps_per_episode=100):
+        # Perform lawnmower pattern first
+        print(f"Performing lawn mover pattern, updating Q-table and collecting data")
+        self.perform_lawnmower_pattern(env)
+        print(f"Lawn mover done, proceeding to training.")
+        
+        
         for episode in range(episodes):
             start = perf_counter()
             state = self.get_state_from_env(env)
+            self.current_actions = []  # Reset action sequence
             min_pH = float('inf')  # Initialize minimum pH tracker
             
             for step in range(max_steps_per_episode):
@@ -67,6 +113,9 @@ class QAgent:
 
                 # Update the minimum pH encountered
                 min_pH = min(min_pH, right_pH, left_pH, front_pH)
+
+                # Update the highest plume information
+                self.update_highest_plume(env, [right_pH, left_pH, front_pH])
 
                 # Choose and execute the action
                 action = self.choose_action(state)
@@ -83,11 +132,10 @@ class QAgent:
                 state = next_state
             
             # At the end of the episode, print the minimum pH found
-            print(f"--------------------Episode {episode+1}/{episodes} completed.------------------")
+            print(f"Episode {episode+1}/{episodes} completed.")
             print(f"Minimum pH found: {min_pH:.2f}\n")
-            print(" State:         H  M  L                        H  M  L")
-            print(f"Current state: {state}          Next state: {next_state}\n")
-            print(f"Position: x:{env.x}, y: {env.y}, z: {env.z}")
+            print("Current state: ", state, " Next state: ", next_state)
+            print(f"Position: x: {env.x}, y: {env.y}, z: {env.z}")
             print(f"Time to complete episode: {perf_counter() - start:.2f} seconds.")
             print(f"Reward: {reward}\n")
             print("-------------------------------------------------------------")
@@ -98,18 +146,12 @@ class QAgent:
         High reward for high gas reading, medium reward for medium reading, negative for low reading.
         """
         min_pH = min(next_state)
-
         
-        if min_pH == 2:  # Very low pH - high gas consentration
-            self.found_gas = True
+        if min_pH == 2:  # Very low pH - high gas concentration
             return 10
-        elif min_pH == 0:  # High pH - low gas consentration
-            if not self.found_gas:
-                return 0
-            else:
-                return -1
+        elif min_pH == 0:  # High pH - low gas concentration
+            return -1
         else:
-            self.found_gas = True
             return 5  # Medium gas reading
 
     def reward_exposure_time(self, next_state):
@@ -140,8 +182,8 @@ class QAgent:
         elif min_pH == 1:
             reward += 5   # Medium gas reading
         return reward
-    
-# Example usage
+
+
 class Environment_interaction:
     def __init__(self, chem_data_path, x_start, y_start, z_start=0, confined=False, x_bounds=(0, 250), y_bounds=(0, 250)):
         self.chemical_dataset = chem_utils.load_chemical_dataset(chem_data_path)
@@ -155,6 +197,10 @@ class Environment_interaction:
         self.confined = confined            # Whether the agent is confined to a specific area
         self.x_min, self.x_max = x_bounds
         self.y_min, self.y_max = y_bounds
+        
+        self.collected_data = []  # List to store collected data during lawnmower path
+
+    # Assuming other method definitions remain the same
 
     def get_current_pH_values(self):
         """
@@ -318,30 +364,63 @@ class Environment_interaction:
         # To be determined
         return False
     
+
+    def generate_lawnmower_path(self, width, min_turn_radius, direction='y'):
+        """
+        Generates a lawnmower path and collects initial data.
+        """
+        # Generate waypoints for the lawnmower pattern
+        x_data = np.linspace(self.x_min, self.x_max, 100)
+        y_data = np.linspace(self.y_min, self.y_max, 100)
+        waypoints, x_coords, y_coords, z_coords = lp.generate_lawnmower_waypoints(
+            x_data, y_data, width, min_turn_radius, self.z, direction
+        )
+        
+        self.collected_data = waypoints
+
+        # Simulate moving and collecting data along the waypoints
+        for x, y, z in waypoints:
+            self.x, self.y, self.z = x, y, z
+            pH_readings = self.get_current_pH_values()
+            self.collected_data.append((x, y, z, pH_readings))
+            
+            # Visualize the agent's path
+            plt.scatter(x, y, c=pH_readings[2], cmap='coolwarm', s=10)  # Color by front pH reading
+        
+        plt.colorbar(label='pH Value')
+        plt.xlabel('Easting [m]')
+        plt.ylabel('Northing [m]')
+        plt.title('Lawnmower Path with pH Readings')
+        plt.show()
+
+
+
 class QAgentSimulator:
-    def __init__(self, environment, q_table):
+    def __init__(self, environment, agent, initial_lawnmower=True):
         self.env = environment
-        self.q_table = q_table
+        self.agent = agent
         self.state = self.env.get_reading_levels()
         self.position_history = []
         self.pH_readings_history = []
+        self.initial_lawnmower = initial_lawnmower
+
+        if self.initial_lawnmower:
+            self._perform_initial_lawnmower()
+
+    def _perform_initial_lawnmower(self):
+        # Perform the initial lawnmower pattern and record data
+        self.agent.perform_lawnmower_pattern(self.env)
 
     def simulate(self, max_steps=100):
         self.position_history.append((self.env.x, self.env.y))
         self.pH_readings_history.append(self.env.get_current_pH_values())
 
         for _ in range(max_steps):
-            action = self.choose_action(self.state)
+            action = self.agent.choose_action(self.state)
             next_state = self.env.perform_action(action)
             self.position_history.append((self.env.x, self.env.y))
             self.pH_readings_history.append(self.env.get_current_pH_values())
             self.state = next_state
-
-    def choose_action(self, state):
-        state_action_values = self.q_table[state]
-        max_value = np.max(state_action_values)
-        actions_with_max_value = np.where(state_action_values == max_value)[0]
-        return np.random.choice(actions_with_max_value)
 
     def plot_behavior(self, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False):
         plt.rcParams.update({
@@ -391,12 +470,46 @@ class QAgentSimulator:
         plt.title('Agent Path with Chemical Environment')
         plt.grid(True)
         plt.legend()
-
         plt.show()
-       
+
+def test_confined_gas_level_reward():
+    chemical_file_path = "../SMART-AUVs_OF-June-1c-0002.nc"
+    z_start = 68
+
+    # Set boundaries for the confined environment
+    x_bounds = (130, 175)
+    y_bounds = (120, 160)
+
+    conf_env = Environment_interaction(chemical_file_path, np.random.randint(x_bounds[0], x_bounds[1]), np.random.randint(y_bounds[0], y_bounds[1]), z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
+
+    simulator = QAgentSimulator(conf_env, agent)
+    # Run the simulation
+    simulator.simulate(max_steps=100)
+    # Plot the behavior of the agent
+    simulator.plot_behavior(
+            chemical_file_path=chemical_file_path,
+            time_target=7,
+            z_target=z_start,
+            data_parameter='pH',
+            zoom=True)
+    simulator.plot_behavior(
+            chemical_file_path=chemical_file_path,
+            time_target=7,
+            z_target=z_start,
+            data_parameter='pH',
+            zoom=False)
     
 
-# Simulation setup
+
+# %%
+print("Training with confined environment")
+agent = QAgent()
+agent.set_reward_function(agent.reward_gas_level)
+print("Training with reward function 1: High gas reading reward")
+agent.train(conf_env, episodes=10)
+
+
+## ---------------------------- Train - Run - Simulate ------------------------------------
 chemical_file_path = "../SMART-AUVs_OF-June-1c-0002.nc"
 x_start = np.random.randint(0, 250)
 y_start = np.random.randint(0, 250)
@@ -441,7 +554,7 @@ agent.train(env, episodes=100)
 
 
 # %%
-simulator = QAgentSimulator(conf_env, agent.q_table)
+simulator = QAgentSimulator(conf_env, agent)
 # Run the simulation
 simulator.simulate(max_steps=100)
 # Plot the behavior of the agent
@@ -457,60 +570,3 @@ simulator.plot_behavior(
         z_target=z_start,
         data_parameter='pH',
         zoom=False)
-
-
-
-
-
-
-
-
-# %%
-
-class RunAndSimulate:
-    def __init__(self, chem_data_path):
-        self.agent = None
-        self.env = None
-        self.sim = None
-    
-    def set_environment(self, x_start, y_start, z_start=68):
-        self.env = Environment_interaction(chemical_file_path, x_start, y_start, z_start)
-
-    def set_confined_environment(self, x_start, y_start, z_start=68, confined=False, x_bounds=(0, 250), y_bounds=(0, 250)):
-        self.env = Environment_interaction(chemical_file_path, x_start, y_start, z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
-
-    def set_Agent(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1):
-        self.agent = QAgent()
-        self.agent.set_reward_function(self.agent.reward_gas_level)
-    
-    def train(self):
-        self.agent.train()
-    
-    def set_QAgentSimulator(self, q_table):
-        simulator = QAgentSimulator(self.env, agent.q_table)
-        # Run the simulation
-        simulator.simulate(max_steps=100)
-        # Plot the behavior of the agent
-        simulator.plot_behavior(chemical_file_path=chemical_file_path, time_target=7, z_target=z_start, data_parameter='pH', zoom=True)
-        simulator.plot_behavior(chemical_file_path=chemical_file_path, time_target=7, z_target=z_start, data_parameter='pH', zoom=False)
-
-
-
-## ---------------------------- Train - Run - Simulate ------------------------------------
-
-chemical_file_path = "../SMART-AUVs_OF-June-1c-0002.nc"
-x_start = np.random.randint(0, 250)
-y_start = np.random.randint(0, 250)
-z_start = 68
-
-# Set boundaries for the confined environment
-x_bounds = (130, 175)
-y_bounds = (120, 160)
-
-
-AUV_conf = RunAndSimulate()
-AUV_conf.set_confined_environment(chemical_file_path, np.random.randint(x_bounds[0], x_bounds[1]), np.random.randint(y_bounds[0], y_bounds[1]), z_start, confined=True, x_bounds=x_bounds, y_bounds=y_bounds)
-AUV_conf.set_Agent()
-AUV_conf.set_QAgentSimulator()
-
-
