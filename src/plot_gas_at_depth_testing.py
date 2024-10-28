@@ -1,18 +1,14 @@
 # %%
-import os
-import numpy as np
 import matplotlib.pyplot as plt
 import importlib
+import lawnmower_path as lp
 # import path_utils ## lage selv for å rotere punkter
+import chem_utils as cu
+import path
 import xarray
-from utils import (
-   lawnmower_path,
-   chem_utils,
-   path,
-   patterns,
-   generate_colormap,
-   bubble_utils
-)
+import patterns
+import generate_colormap
+import bubble_utils
 
 plt.rcParams.update({
     "text.usetex": False,  # Disable external LaTeX usage
