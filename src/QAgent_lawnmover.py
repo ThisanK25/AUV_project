@@ -1,8 +1,7 @@
 # %%
 import numpy as np
-from scipy.spatial import Delaunay
-import path
-import chem_utils
+from utils import chem_utils
+from utils.direction import Direction
 from time import perf_counter
 import matplotlib.pyplot as plt
 import lawnmower_path as lp
@@ -93,7 +92,7 @@ class QAgent:
             
             self.update_q_table(state, action, reward, next_state)
             self.update_highest_plume(env, pH_readings)
-
+    
     def train(self, env, episodes=1000, max_steps_per_episode=100):
         # Perform lawnmower pattern first
         print(f"Performing lawn mover pattern, updating Q-table and collecting data")
@@ -194,7 +193,7 @@ class Environment_interaction:
         self.y = y_start
         self.z = z_start                    # Default depth or height, if applicable
         self.radius_of_gas_reading = 5      # The radius of the area that the agent collects readings from
-        self.heading = 'north'              # Initial heading of the agent (can be north, south, east, west)
+        self.heading = Direction.North              # Initial heading of the agent (can be north, south, east, west)
         self.confined = confined            # Whether the agent is confined to a specific area
         self.x_min, self.x_max = x_bounds
         self.y_min, self.y_max = y_bounds
@@ -211,19 +210,19 @@ class Environment_interaction:
         steps = 1  # Coordinate steps
 
         # Define positions relative to the agent's current heading
-        if self.heading == 'north':
+        if self.heading == Direction.North:
             front_pos = (self.x, self.y + steps, self.z)
             left_pos = (self.x - steps, self.y, self.z)
             right_pos = (self.x + steps, self.y, self.z)
-        elif self.heading == 'east':
+        elif self.heading == Direction.East:
             front_pos = (self.x + steps, self.y, self.z)
             left_pos = (self.x, self.y + steps, self.z)
             right_pos = (self.x, self.y - steps, self.z)
-        elif self.heading == 'south':
+        elif self.heading == Direction.South:
             front_pos = (self.x, self.y - steps, self.z)
             left_pos = (self.x + steps, self.y, self.z)
             right_pos = (self.x - steps, self.y, self.z)
-        elif self.heading == 'west':
+        elif self.heading == Direction.West:
             front_pos = (self.x - steps, self.y, self.z)
             left_pos = (self.x, self.y - steps, self.z)
             right_pos = (self.x, self.y + steps, self.z)
@@ -312,7 +311,7 @@ class Environment_interaction:
         """
         Perform the given action (move forward, left, or right) relative to the agent's current heading.
         """
-        directions = ['north', 'east', 'south', 'west']
+        directions = [Direction.North, Direction.East, Direction.South, Direction.West]
 
         if action == 2:  # Move forward
             self._move_forward()
@@ -352,13 +351,13 @@ class Environment_interaction:
     #             self.x -= 1  # Move left in x-axis
 
     def _move_forward(self):
-        if self.heading == 'north' and (not self.confined or self.y + 1 <= self.y_max):
+        if self.heading == Direction.North and (not self.confined or self.y + 1 <= self.y_max):
             self.y += 1  # Move up in y-axis
-        elif self.heading == 'east' and (not self.confined or self.x + 1 <= self.x_max):
+        elif self.heading == Direction.East and (not self.confined or self.x + 1 <= self.x_max):
             self.x += 1  # Move right in x-axis
-        elif self.heading == 'south' and (not self.confined or self.y - 1 >= self.y_min):
+        elif self.heading == Direction.South and (not self.confined or self.y - 1 >= self.y_min):
             self.y -= 1  # Move down in y-axis
-        elif self.heading == 'west' and (not self.confined or self.x - 1 >= self.x_min):
+        elif self.heading == Direction.West and (not self.confined or self.x - 1 >= self.x_min):
             self.x -= 1  # Move left in x-axis
 
     def is_done(self):

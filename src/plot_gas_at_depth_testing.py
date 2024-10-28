@@ -1,16 +1,7 @@
 # %%
-import os
-import numpy as np
 import matplotlib.pyplot as plt
-import importlib
-import lawnmower_path as lp
 # import path_utils ## lage selv for å rotere punkter
-import chem_utils as cu
-import path
-import xarray
-import patterns
-import generate_colormap
-import bubble_utils
+from utils import chem_utils as cu
 
 plt.rcParams.update({
     "text.usetex": False,  # Disable external LaTeX usage
