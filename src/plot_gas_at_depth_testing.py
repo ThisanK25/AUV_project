@@ -3,14 +3,16 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import importlib
-import lawnmower_path as lp
 # import path_utils ## lage selv for å rotere punkter
-import chem_utils as cu
-import path
 import xarray
-import patterns
-import generate_colormap
-import bubble_utils
+from utils import (
+   lawnmower_path,
+   chem_utils,
+   path,
+   patterns,
+   generate_colormap,
+   bubble_utils
+)
 
 plt.rcParams.update({
     "text.usetex": False,  # Disable external LaTeX usage
@@ -20,7 +22,7 @@ plt.rcParams.update({
 
 # File path to the chemical data NetCDF file
 chemical_file_path = "../SMART-AUVs_OF-June-1c-0002.nc"
-chemical_dataset = cu.load_chemical_dataset(chemical_file_path)
+chemical_dataset = chem_utils.load_chemical_dataset(chemical_file_path)
 
 # Define target coordinates and parameters for volume extraction
 x_target = 100
@@ -33,7 +35,7 @@ metadata = x_target, y_target, z_target, time_target, radius
 data_parameter = 'pH'
 
 # Extract chemical data and compute average value within the specified volume
-chemical_volume_data_mean, data_within_radius = cu.extract_chemical_data_for_volume(
+chemical_volume_data_mean, data_within_radius = chem_utils.extract_chemical_data_for_volume(
     chemical_dataset, metadata, data_parameter
 )
 

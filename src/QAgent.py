@@ -1,8 +1,10 @@
 # %%
 import numpy as np
 from scipy.spatial import Delaunay
-import path
-import chem_utils
+from utils import (
+    path,
+    chem_utils
+)
 from time import perf_counter
 import matplotlib.pyplot as plt
 

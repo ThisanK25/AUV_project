@@ -6,7 +6,7 @@ setup(
     description='in5490 project 4',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    author='Jonas E. Wenberg, Sigmund, Thisan',
+    author='Jonas E. Wenberg, Sigmund K. Slåttum, Thisan Krishnakumar',
     author_email='jonaen@üio.no',
     url='https://github.com/ThisanK25/AUV_project',  # or the URL of your project
     packages=find_packages(),

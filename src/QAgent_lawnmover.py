@@ -1,11 +1,13 @@
 # %%
 import numpy as np
 from scipy.spatial import Delaunay
-import path
-import chem_utils
 from time import perf_counter
 import matplotlib.pyplot as plt
-import lawnmower_path as lp
+from utils import (
+    path,
+    chem_utils,
+    lawnmower_path as lp
+)
 
 class QAgent:
     def __init__(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1):
