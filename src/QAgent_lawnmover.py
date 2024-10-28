@@ -360,6 +360,26 @@ class Environment_interaction:
         elif self.heading == Direction.West and (not self.confined or self.x - 1 >= self.x_min):
             self.x -= 1  # Move left in x-axis
 
+    def _move_to(self, target:tuple[int, int, int]):
+        """
+        Moves the AUV to a target location.
+        input:
+          target : tuple[int, int, int] - x, y, z coords
+        output: None
+        """
+        x_target, y_target , _= target
+        x_dir = Direction.East if x_target - self.x < 0 else Direction.West
+        y_dir = Direction.North if x_target - self.x < 0 else Direction.South
+        self.heading = x_dir
+        while x_target - self.x != 0:
+            self._move_forward()
+        
+        self.heading = y_dir
+        while y_target - self.y != 0:
+            self._move_forward()
+            
+
+
     def is_done(self):
         # To be determined
         return False
