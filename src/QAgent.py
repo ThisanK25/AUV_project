@@ -3,15 +3,17 @@ import numpy as np
 from utils import chem_utils
 from time import perf_counter
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 class QAgent:
-    def __init__(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1):
+    def __init__(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1, save_to_csv=True):
         self.q_table = np.zeros(q_table_shape)
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.possible_states = np.array([0, 1, 2])  # 0: High, 1: Medium, 2: Low
         self.possible_actions = np.array([0, 1, 2])  # 0: Right, 1: Left, 2: Forward
+        self.save_to_csv = save_to_csv
         
         # ---- Variables for reward -----
         self.found_gas = False
@@ -53,6 +55,21 @@ class QAgent:
         next_state = env.perform_action(action)
         return next_state
     
+    def load_q_table_from_csv(self, file_name):
+        """Load the Q-table from a CSV file."""
+        df = pd.read_csv(file_name)
+        q_table_flattened = df['q_value'].values
+        self.q_table = q_table_flattened.reshape(self.q_table.shape)
+        print(f"Q-table loaded from {file_name}")
+
+    def save_q_table_to_csv(self, file_name):
+        """Save the Q-table to a CSV file."""
+        q_table_flattened = self.q_table.flatten()
+        index = np.arange(len(q_table_flattened))
+        df = pd.DataFrame({'index': index, 'q_value': q_table_flattened})
+        df.to_csv(file_name, index=False)
+        print(f"Q-table saved to {file_name}")
+    
     def train(self, env, episodes=1000, max_steps_per_episode=100):
         for episode in range(episodes):
             start = perf_counter()
@@ -89,6 +106,10 @@ class QAgent:
             print(f"Time to complete episode: {perf_counter() - start:.2f} seconds.")
             print(f"Reward: {reward}\n")
             print("-------------------------------------------------------------")
+    
+        if self.save_to_csv:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            self.save_q_table_to_csv(f'../trained_q_tables/q_table_episode_{episodes}_Time_{timestamp}.csv')
 
     # Reward functions encapsulated in the QAgent class
     def reward_gas_level(self, next_state):
@@ -413,7 +434,7 @@ print("Training with confined environment")
 agent = QAgent()
 agent.set_reward_function(agent.reward_gas_level)
 print("Training with reward function 1: High gas reading reward")
-agent.train(conf_env, episodes=10)
+agent.train(conf_env, episodes=1)
 
 
 # %%
