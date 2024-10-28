@@ -1,6 +1,6 @@
 # %%
 import numpy as np
-import chem_utils
+from utils import chem_utils
 from time import perf_counter
 import matplotlib.pyplot as plt
 
