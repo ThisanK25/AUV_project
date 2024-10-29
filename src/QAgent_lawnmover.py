@@ -1,7 +1,7 @@
 # %%
 import numpy as np
 from utils import chem_utils, lawnmower_path
-from utils.direction import Direction
+from QAgent_Enums import Direction
 from time import perf_counter
 import matplotlib.pyplot as plt
 from utils import lawnmower_path as lp
@@ -15,7 +15,6 @@ class QAgent:
         
         self.possible_states = np.array([0, 1, 2])  # 0: High, 1: Medium, 2: Low
         self.possible_actions = np.array([0, 1, 2])  # 0: Right, 1: Left, 2: Forward
-        
 
         # Variables for reward
         self.time_steps_in_high = 0
@@ -396,7 +395,7 @@ class Environment_interaction:
             x_data, y_data, width, min_turn_radius, self.z, direction
         )
         
-        self.collected_data = waypoints
+        self.collected_data = list(waypoints)
 
         # Simulate moving and collecting data along the waypoints
         for x, y, z in waypoints:
@@ -597,3 +596,8 @@ test_confined_gas_level_reward()
 #         z_target=z_start,
 #         data_parameter='pH',
 #         zoom=False)
+
+#%%
+env = Environment_interaction("../SMART-AUVs_OF-June-1c-0002.nc", 50, 200)
+qa = QAgent()
+env.generate_lawnmower_path(10, 5)

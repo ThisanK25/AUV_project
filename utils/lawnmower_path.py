@@ -26,8 +26,41 @@ import numpy as np
 #     'font.size': 14
 # })
 
+def interpolate_points(start, end, interval):
+    """
+    Generate intermediate points between start and end with a given interval.
 
-def make_lawnmower_path(x_data, y_data, width, min_turn_radius, direction='y'):
+    Parameters
+    ----------
+    start : tuple
+        Starting point (x, y).
+    end : tuple
+        Ending point (x, y).
+    interval : float
+        Distance between consecutive points.
+
+    Returns
+    -------
+    points : list of tuple
+        List of intermediate points (x, y).
+    """
+    points = []
+    start = np.array(start)
+    end = np.array(end)
+    distance = np.linalg.norm(end - start)
+    if distance == 0:
+        return points
+
+    direction = (end - start) / distance
+    num_points = int(distance // interval)
+
+    for i in range(1, num_points + 1):
+        point = start + i * interval * direction
+        points.append(tuple(point))
+
+    return points
+
+def make_lawnmower_path(x_data, y_data, width, min_turn_radius, direction='y', point_interval=1.0):
     """
     Generate a lawnmower path covering the specified area.
 
@@ -43,6 +76,8 @@ def make_lawnmower_path(x_data, y_data, width, min_turn_radius, direction='y'):
         Minimum turn radius.
     direction : str, optional
         Direction of the passes, either 'x' or 'y' (default is 'y').
+    point_interval : float, optional
+        Interval distance between consecutive points (default is 1.0).
 
     Returns
     -------
@@ -61,8 +96,8 @@ def make_lawnmower_path(x_data, y_data, width, min_turn_radius, direction='y'):
             buffer_x = min_turn_radius
             buffer_y = min_turn_radius * 2
     else:
-        buffer_x = width/2
-        buffer_y = width/2
+        buffer_x = width / 2
+        buffer_y = width / 2
 
     # Define the boundaries of the area after applying the buffer
     x_min, x_max = np.min(x_data) + buffer_x, np.max(x_data) - buffer_x
@@ -81,9 +116,13 @@ def make_lawnmower_path(x_data, y_data, width, min_turn_radius, direction='y'):
 
             # Alternate between bottom-to-top and top-to-bottom passes
             if i % 2 == 0:
-                waypoints.extend([(x_start, y_min), (x_start, y_max)])
+                waypoints.append((x_start, y_min))
+                waypoints.extend(interpolate_points((x_start, y_min), (x_start, y_max), point_interval))
+                waypoints.append((x_start, y_max))
             else:
-                waypoints.extend([(x_start, y_max), (x_start, y_min)])
+                waypoints.append((x_start, y_max))
+                waypoints.extend(interpolate_points((x_start, y_max), (x_start, y_min), point_interval))
+                waypoints.append((x_start, y_min))
 
     elif direction == 'y':
         num_passes = int((y_max - y_min) / width) + 1
@@ -95,9 +134,13 @@ def make_lawnmower_path(x_data, y_data, width, min_turn_radius, direction='y'):
 
             # Alternate between left-to-right and right-to-left passes
             if i % 2 == 0:
-                waypoints.extend([(x_min, y_start), (x_max, y_start)])
+                waypoints.append((x_min, y_start))
+                waypoints.extend(interpolate_points((x_min, y_start), (x_max, y_start), point_interval))
+                waypoints.append((x_max, y_start))
             else:
-                waypoints.extend([(x_max, y_start), (x_min, y_start)])
+                waypoints.append((x_max, y_start))
+                waypoints.extend(interpolate_points((x_max, y_start), (x_min, y_start), point_interval))
+                waypoints.append((x_min, y_start))
 
     return waypoints
 
