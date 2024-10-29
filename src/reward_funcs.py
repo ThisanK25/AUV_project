@@ -5,8 +5,7 @@ def reward_gas_level(_, next_state):
     """
     High reward for high gas reading, medium reward for medium reading, negative for low reading.
     """
-    min_pH = min(next_state)
-    
+    min_pH = PH_Reading(min(next_state))
     if min_pH == PH_Reading.LOW:  # Very low pH - high gas concentration
         return 10
     elif min_pH == PH_Reading.HIGH:  # High pH - low gas concentration

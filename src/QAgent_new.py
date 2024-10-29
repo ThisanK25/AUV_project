@@ -35,6 +35,7 @@ class Q_Agent:
 
     def run(self, max_steps= 100):
         # ! Lawnmower goes here
+        # self._move_to_max_gas_value()
         # min_ph = self._env.min_pH_position
         reward = 0
         for step in range(max_steps):
@@ -47,8 +48,6 @@ class Q_Agent:
             reward += self._reward_function(self, next_state)
             self.update_q_table(current_state, action, reward, next_state)
             current_state = next_state
-
-
 
     def choose_action(self, state:tuple[PH_Reading, PH_Reading, PH_Reading]) -> int:
         if np.random.rand() < self._epsilon:
