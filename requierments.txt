@@ -1,4 +1,6 @@
 numpy
-xarray
+xarray[complete]
 matplotlib
 scipy
+packaging
+pandas
