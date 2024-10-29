@@ -1,6 +1,6 @@
 # %%
 import numpy as np
-from utils import chem_utils
+from utils import chem_utils, lawnmower_path
 from utils.direction import Direction
 from time import perf_counter
 import matplotlib.pyplot as plt
@@ -12,9 +12,11 @@ class QAgent:
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
+        
         self.possible_states = np.array([0, 1, 2])  # 0: High, 1: Medium, 2: Low
         self.possible_actions = np.array([0, 1, 2])  # 0: Right, 1: Left, 2: Forward
         
+
         # Variables for reward
         self.time_steps_in_high = 0
         self.time_steps_in_medium = 0
@@ -22,8 +24,8 @@ class QAgent:
         
         # Tracking the sequence of actions to highest plume reading
         self.highest_plume_actions = []
-        self.highest_plume_position = None
-        self.highest_plume_pH = float('inf')
+        self.highest_plume_position = (-1, -1, -1) # default
+        self.highest_plume_pH = float('inf') # needs renaming
         self.current_actions = []
 
     def set_reward_function(self, reward_function):
@@ -31,11 +33,11 @@ class QAgent:
 
     def initialize_state(self):
         """Initialize the agent to a random state."""
-        init_state = tuple(np.random.choice(self.possible_states, size=3))
+        init_state = tuple(np.random.choice(self.possible_states, size=3)) # ??? Isnt this determined by gas level at the start location
         return init_state
 
     def choose_action(self, state):
-        if np.random.rand() < self.epsilon:
+        if np.random.rand() < self.epsilon: # We might want to try a soft max here
             return np.random.choice(self.possible_actions)  # Exploration
         else:
             state_action_values = self.q_table[state]
@@ -67,6 +69,25 @@ class QAgent:
             self.highest_plume_pH = min_pH
             self.highest_plume_position = (env.x, env.y, env.z)
             self.highest_plume_actions = list(self.current_actions)  # Copy current actions
+    
+    def move_to(self, env : Environment_interaction, target:tuple[int, int, int]):
+        """
+        Moves the AUV to a target location.
+        input:
+          target : tuple[int, int, int] - x, y, z coords
+        output: None
+        """
+        x_target, y_target , _= target
+        x_dir = Direction.East if x_target - self.x < 0 else Direction.West
+        y_dir = Direction.North if x_target - self.x < 0 else Direction.South
+        self.heading = x_dir
+        while x_target - self.x != 0:
+            self._move_forward()
+        
+        self.heading = y_dir
+        while y_target - self.y != 0:
+            self._move_forward()
+        
 
     def perform_lawnmower_pattern(self, env, width=10, min_turn_radius=10, direction='y'):
         """
@@ -87,16 +108,13 @@ class QAgent:
             action = 2  # Forward
             next_state = self.execute_action(env, action)
             
-            # Evaluate reward using the selected reward function
-            reward = self.reward_function(next_state)
-            
-            self.update_q_table(state, action, reward, next_state)
             self.update_highest_plume(env, pH_readings)
     
     def train(self, env, episodes=1000, max_steps_per_episode=100):
         # Perform lawnmower pattern first
         print(f"Performing lawn mover pattern, updating Q-table and collecting data")
         self.perform_lawnmower_pattern(env)
+        env.move_to(self.highest_plume_position)
         print(f"Lawn mover done, proceeding to training.")
         
         
@@ -359,6 +377,8 @@ class Environment_interaction:
             self.y -= 1  # Move down in y-axis
         elif self.heading == Direction.West and (not self.confined or self.x - 1 >= self.x_min):
             self.x -= 1  # Move left in x-axis
+            
+
 
     def is_done(self):
         # To be determined

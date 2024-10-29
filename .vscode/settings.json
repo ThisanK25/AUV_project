@@ -2,6 +2,7 @@
     "python.analysis.extraPaths": [
         "./utils",
         "./src",
-        "./dist"
+        "./dist",
+        "./sim"
     ]
 }
