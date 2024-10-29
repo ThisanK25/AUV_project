@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Callable
 import numpy as np
-from QAgent_Enums import Direction, AUV_ACTIONS
+from QAgent_Enums import Direction, AUV_ACTIONS, PH_Reading
 from Q_environment import Q_Environment
 from reward_funcs import reward_gas_level
 from utils import lawnmower_path as lp
@@ -39,7 +39,9 @@ class Q_Agent:
         reward = 0
         for step in range(max_steps):
             current_state = self._env.get_state_from_position(self._position, self._heading)
-            
+            # Convert state to tuple of integers
+
+            current_state = tuple(map(lambda x: x.value, current_state))
             action = self.choose_action(current_state)
             next_state = self.execute_action(action)
             reward += self._reward_function(self, next_state)
@@ -48,10 +50,10 @@ class Q_Agent:
 
 
 
-    def choose_action(self, state) -> int:
-        if np.random.rand() < self._epsilon: # soft_max?
-            return np.random.choice(self.possible_actions)
-        return np.argmax(self._q_table[state]) # Picks the best action
+    def choose_action(self, state:tuple[PH_Reading, PH_Reading, PH_Reading]) -> int:
+        if np.random.rand() < self._epsilon:
+            return np.random.choice(3)
+        return np.argmax(self.q_table[state])
     
     def update_q_table(self, state:int, action:int, reward:int, next_state:int) -> None:
         current_q = self._q_table[state][action]
@@ -87,7 +89,7 @@ class Q_Agent:
         
         if self._env.inbounds(new_pos):
            self._position = new_pos # We can throw a ValueError here to catch during training.
-        return self._env.get_current_pH_values(self._position, self._heading)
+        return tuple(map(lambda x: x.value, self._env.get_state_from_position(self._position, self._heading)))
 
 
     def _move_to_max_gas_value(self) -> None:
