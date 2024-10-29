@@ -11,12 +11,11 @@ class Q_trainer:
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
 
     
-    def train(self, episodes = 10000, max_steps_per_episode = 2000):
-        # lawnmover goes here
+    def train(self, episodes = 500, max_steps_per_episode = 5000):
         for episode in range(episodes):
             agent = Q_Agent(self._env)
             agent.q_table = self._q_table
-            agent.run()
+            agent.run(max_steps_per_episode)
             self._q_table = agent._q_table
 
         pprint(self._q_table)
