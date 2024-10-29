@@ -199,7 +199,47 @@ class QAgent:
         elif min_pH == 1:
             reward += 5   # Medium gas reading
         return reward
+    
+    def cartesian_lawnmower(self, env, start_x, end_x, start_y, end_y, turn_length):
+        env.x = start_x
+        env.y = start_y
+        env.heading = Direction.East    # Pathen går langs horisontal retning
+        
+        count_length = 0
+        directions = [Direction.North, Direction.East, Direction.South, Direction.West]
+        # Bare satt opp selve pathen, ikke noe lesing enda
 
+        # Stoppe pathen før den går out of bounds
+        while count_length < end_y-start_y:
+            for _ in range(end_x - start_x):
+                env._move_forward()
+            
+            # Turn right relative to current heading
+            current_index = directions.index(self.heading)
+            self.heading = directions[(current_index + 1) % 4]  # Update heading
+
+            for _ in range(turn_length):
+                env._move_forward()
+                count_length += 1
+
+            # Turn right relative to current heading
+            current_index = directions.index(self.heading)
+            self.heading = directions[(current_index + 1) % 4]  # Update heading
+
+            for _ in range(end_x - start_x):
+                env._move_forward()
+            
+            # Turn left relative to the current heading
+            current_index = directions.index(self.heading)
+            env.heading = directions[(current_index - 1) % 4]  # Update heading
+
+            for _ in range(turn_length):
+                env._move_forward()
+                count_length += 1
+
+            # Turn left relative to the current heading
+            current_index = directions.index(self.heading)
+            env.heading = directions[(current_index - 1) % 4]  # Update heading
 
 class Environment_interaction:
     def __init__(self, chem_data_path, x_start, y_start, z_start=0, confined=False, x_bounds=(0, 250), y_bounds=(0, 250)):
