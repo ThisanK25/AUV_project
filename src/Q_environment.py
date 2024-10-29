@@ -3,6 +3,7 @@ from xarray import Dataset
 from utils import chem_utils
 import numpy as np
 from pathlib import Path
+
 class Q_Environment:
     def __init__(self, chem_data_path:str | Path, 
                  reading_radius:int = 5,
@@ -28,7 +29,6 @@ class Q_Environment:
         
         current_pH_classification_limits = []
         
-        
         match depth:
             case 69:
                 current_pH_classification_limits = ph_69
@@ -43,6 +43,9 @@ class Q_Environment:
             case 64:
                 current_pH_classification_limits = ph_64
         return current_pH_classification_limits
+
+    def get_state_from_position(self, pos, heading):
+        return tuple(map(self._classify_pH, self.get_current_pH_values(pos, heading)))
 
     def get_current_pH_values(self, position, heading)-> tuple:
         """
@@ -118,8 +121,12 @@ class Q_Environment:
         x, y , _= pos
         self._collected_data[x - self._x_size[0]][y - self._y_size[0]] = avg_value
 
-    def _get_table_data_at_position(self, pos:tuple[int, int, int]):
+    def _get_table_data_at_position(self, pos:tuple[int, int, int]) -> float:
         if not self.inbounds(pos):
             return float('inf')
-        x, y, z = pos
+        x, y, _ = pos
         return self._collected_data[x-self._x_size[0]][y-self._y_size[0]]
+    
+    @property
+    def min_pH_position(self):
+        return np.argmin(self._collected_data)
