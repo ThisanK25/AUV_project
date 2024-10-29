@@ -1,11 +1,10 @@
 from pathlib import Path
 from typing import Callable
 import numpy as np
-from QAgent_Enums import Direction, AUV_ACTIONS, PH_Reading
+from QAgent_Enums import Direction, AUV_ACTIONS
 from Q_environment import Q_Environment
 from reward_funcs import reward_gas_level
 from utils import lawnmower_path as lp
-import pickle # Too store the q-table
 
 class Q_Agent:
     def __init__(self, 
@@ -49,7 +48,7 @@ class Q_Agent:
             self.update_q_table(current_state, action, reward, next_state)
             current_state = next_state
 
-    def choose_action(self, state:tuple[PH_Reading, PH_Reading, PH_Reading]) -> int:
+    def choose_action(self, state:tuple[int, int, int]) -> int:
         if np.random.rand() < self._epsilon:
             return np.random.choice(3)
         return np.argmax(self.q_table[state])
