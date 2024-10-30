@@ -65,12 +65,14 @@ class Q_Agent:
         return next_state
     
     def perform_action(self, action) -> tuple:
+        action = AUV_ACTIONS(action)
+        heading = self._heading.value
         if action == AUV_ACTIONS.RIGHT:
-            self._heading = Direction(Direction.value((self._heading+1)%4))
+            self._heading = Direction((heading+1)%4)
         
         if action == AUV_ACTIONS.LEFT:
-            self._heading = Direction(Direction.value((self._heading-1)%4))
-        
+            self._heading = Direction((heading - 1) % 4) 
+        print(self._heading, action)
         return self._move_forward()
 
 
