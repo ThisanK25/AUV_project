@@ -26,6 +26,7 @@ class Q_trainer:
         pprint(self._q_table)
         with open("q_table.pkl", "xb") as f:
             pickle.dump(self._q_table, f)
+    
     def plot_behavior(self, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False):
         plt.rcParams.update({
             "text.usetex": False,  # Disable external LaTeX usage

@@ -61,7 +61,6 @@ class Q_Agent:
     
     def execute_action(self, action) -> tuple:
         next_state: tuple = self.perform_action(action)
-        self._actions_performed.append(action)
         return next_state
     
     def perform_action(self, action) -> tuple:
@@ -92,6 +91,7 @@ class Q_Agent:
         if self._env.inbounds(new_pos):
            self._position = new_pos # We can throw a ValueError here to catch during training.
         print(self._position)
+        self._actions_performed.append(new_pos[2:])
         return tuple(map(lambda x: x.value, self._env.get_state_from_position(self._position, self._heading)))
 
 
