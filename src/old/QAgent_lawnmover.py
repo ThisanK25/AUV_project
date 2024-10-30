@@ -1,10 +1,10 @@
 # %%
 import numpy as np
 from utils import chem_utils, lawnmower_path
-from utils.direction import Direction
+from QAgent_Enums import Direction
 from time import perf_counter
 import matplotlib.pyplot as plt
-import lawnmower_path as lp
+from utils import lawnmower_path as lp
 
 class QAgent:
     def __init__(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1):
@@ -15,7 +15,6 @@ class QAgent:
         
         self.possible_states = np.array([0, 1, 2])  # 0: High, 1: Medium, 2: Low
         self.possible_actions = np.array([0, 1, 2])  # 0: Right, 1: Left, 2: Forward
-        
 
         # Variables for reward
         self.time_steps_in_high = 0
@@ -200,7 +199,47 @@ class QAgent:
         elif min_pH == 1:
             reward += 5   # Medium gas reading
         return reward
+    
+    def cartesian_lawnmower(self, env, start_x, end_x, start_y, end_y, turn_length):
+        env.x = start_x
+        env.y = start_y
+        env.heading = Direction.East    # Pathen går langs horisontal retning
+        
+        count_length = 0
+        directions = [Direction.North, Direction.East, Direction.South, Direction.West]
+        # Bare satt opp selve pathen, ikke noe lesing enda
 
+        # Stoppe pathen før den går out of bounds
+        while count_length < end_y-start_y:
+            for _ in range(end_x - start_x):
+                env._move_forward()
+            
+            # Turn right relative to current heading
+            current_index = directions.index(self.heading)
+            self.heading = directions[(current_index + 1) % 4]  # Update heading
+
+            for _ in range(turn_length):
+                env._move_forward()
+                count_length += 1
+
+            # Turn right relative to current heading
+            current_index = directions.index(self.heading)
+            self.heading = directions[(current_index + 1) % 4]  # Update heading
+
+            for _ in range(end_x - start_x):
+                env._move_forward()
+            
+            # Turn left relative to the current heading
+            current_index = directions.index(self.heading)
+            env.heading = directions[(current_index - 1) % 4]  # Update heading
+
+            for _ in range(turn_length):
+                env._move_forward()
+                count_length += 1
+
+            # Turn left relative to the current heading
+            current_index = directions.index(self.heading)
+            env.heading = directions[(current_index - 1) % 4]  # Update heading
 
 class Environment_interaction:
     def __init__(self, chem_data_path, x_start, y_start, z_start=0, confined=False, x_bounds=(0, 250), y_bounds=(0, 250)):
@@ -396,7 +435,7 @@ class Environment_interaction:
             x_data, y_data, width, min_turn_radius, self.z, direction
         )
         
-        self.collected_data = waypoints
+        self.collected_data = list(waypoints)
 
         # Simulate moving and collecting data along the waypoints
         for x, y, z in waypoints:
@@ -597,3 +636,8 @@ test_confined_gas_level_reward()
 #         z_target=z_start,
 #         data_parameter='pH',
 #         zoom=False)
+
+#%%
+env = Environment_interaction("../SMART-AUVs_OF-June-1c-0002.nc", 50, 200)
+qa = QAgent()
+env.generate_lawnmower_path(10, 5)
