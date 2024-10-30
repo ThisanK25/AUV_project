@@ -85,7 +85,7 @@ class Q_trainer:
 
 
 if __name__ == "__main__":
-    env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68)
+    env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68, x_bounds=(90, 140), y_bounds=(70, 120))
     trainer = Q_trainer(env)
     trainer.train(episodes=1, max_steps_per_episode=5000)
     
