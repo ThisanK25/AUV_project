@@ -130,16 +130,17 @@ class Q_Environment:
         return self._collected_data[x-self._x_size[0]][y-self._y_size[0]]
     
     @property
-    def min_pH_position(self) -> np.intp:
+    def min_pH_position(self) -> tuple[int, int, int]:
         min_pH_position = np.unravel_index(np.argmin(self._collected_data), self._collected_data.shape)
         
         return (min_pH_position[0] + self._x_size[0], min_pH_position[1] + self._y_size[0], self._depth)  
+   
     @property
     def upper_left_corner(self) -> tuple[int, int, int]:
         return self._x_size[0], self._y_size[0], self._depth
     
     @property
     def lower_right_corner(self) -> tuple[int, int, int]:
-        return self._x_size[1], self._y_size[1], self._depth
+        return self._x_size[1]-1, self._y_size[1]-1, self._depth
     
         
