@@ -33,8 +33,8 @@ class Q_Agent:
 
         self._actions_performed: list = []
 
-    def run(self, max_steps = 100) -> None:
-        self.perform_cartesian_lawnmower()
+    def run(self, lawnmower_size = 70, max_steps = 100) -> None:
+        self.perform_cartesian_lawnmower(lawnmower_size)
 
         self._move_to_max_gas_value()
         print(self._position)
