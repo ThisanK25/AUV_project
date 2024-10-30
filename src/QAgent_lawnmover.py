@@ -1,15 +1,10 @@
 # %%
 import numpy as np
-from scipy.spatial import Delaunay
-import path
-import chem_utils
+from utils import chem_utils, lawnmower_path
+from QAgent_Enums import Direction
 from time import perf_counter
 import matplotlib.pyplot as plt
-from utils import (
-    path,
-    chem_utils,
-    lawnmower_path as lp
-)
+from utils import lawnmower_path as lp
 
 class QAgent:
     def __init__(self, q_table_shape=(3, 3, 3, 3), alpha=0.1, gamma=0.9, epsilon=0.1):
@@ -17,9 +12,10 @@ class QAgent:
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
+        
         self.possible_states = np.array([0, 1, 2])  # 0: High, 1: Medium, 2: Low
         self.possible_actions = np.array([0, 1, 2])  # 0: Right, 1: Left, 2: Forward
-        
+
         # Variables for reward
         self.time_steps_in_high = 0
         self.time_steps_in_medium = 0
@@ -27,8 +23,8 @@ class QAgent:
         
         # Tracking the sequence of actions to highest plume reading
         self.highest_plume_actions = []
-        self.highest_plume_position = None
-        self.highest_plume_pH = float('inf')
+        self.highest_plume_position = (-1, -1, -1) # default
+        self.highest_plume_pH = float('inf') # needs renaming
         self.current_actions = []
 
     def set_reward_function(self, reward_function):
@@ -36,11 +32,11 @@ class QAgent:
 
     def initialize_state(self):
         """Initialize the agent to a random state."""
-        init_state = tuple(np.random.choice(self.possible_states, size=3))
+        init_state = tuple(np.random.choice(self.possible_states, size=3)) # ??? Isnt this determined by gas level at the start location
         return init_state
 
     def choose_action(self, state):
-        if np.random.rand() < self.epsilon:
+        if np.random.rand() < self.epsilon: # We might want to try a soft max here
             return np.random.choice(self.possible_actions)  # Exploration
         else:
             state_action_values = self.q_table[state]
@@ -72,6 +68,25 @@ class QAgent:
             self.highest_plume_pH = min_pH
             self.highest_plume_position = (env.x, env.y, env.z)
             self.highest_plume_actions = list(self.current_actions)  # Copy current actions
+    
+    def move_to(self, env : Environment_interaction, target:tuple[int, int, int]):
+        """
+        Moves the AUV to a target location.
+        input:
+          target : tuple[int, int, int] - x, y, z coords
+        output: None
+        """
+        x_target, y_target , _= target
+        x_dir = Direction.East if x_target - self.x < 0 else Direction.West
+        y_dir = Direction.North if x_target - self.x < 0 else Direction.South
+        self.heading = x_dir
+        while x_target - self.x != 0:
+            self._move_forward()
+        
+        self.heading = y_dir
+        while y_target - self.y != 0:
+            self._move_forward()
+        
 
     def perform_lawnmower_pattern(self, env, width=10, min_turn_radius=10, direction='y'):
         """
@@ -92,16 +107,13 @@ class QAgent:
             action = 2  # Forward
             next_state = self.execute_action(env, action)
             
-            # Evaluate reward using the selected reward function
-            reward = self.reward_function(next_state)
-            
-            self.update_q_table(state, action, reward, next_state)
             self.update_highest_plume(env, pH_readings)
     
     def train(self, env, episodes=1000, max_steps_per_episode=100):
         # Perform lawnmower pattern first
         print(f"Performing lawn mover pattern, updating Q-table and collecting data")
         self.perform_lawnmower_pattern(env)
+        env.move_to(self.highest_plume_position)
         print(f"Lawn mover done, proceeding to training.")
         
         
@@ -187,7 +199,47 @@ class QAgent:
         elif min_pH == 1:
             reward += 5   # Medium gas reading
         return reward
+    
+    def cartesian_lawnmower(self, env, start_x, end_x, start_y, end_y, turn_length):
+        env.x = start_x
+        env.y = start_y
+        env.heading = Direction.East    # Pathen går langs horisontal retning
+        
+        count_length = 0
+        directions = [Direction.North, Direction.East, Direction.South, Direction.West]
+        # Bare satt opp selve pathen, ikke noe lesing enda
 
+        # Stoppe pathen før den går out of bounds
+        while count_length < end_y-start_y:
+            for _ in range(end_x - start_x):
+                env._move_forward()
+            
+            # Turn right relative to current heading
+            current_index = directions.index(self.heading)
+            self.heading = directions[(current_index + 1) % 4]  # Update heading
+
+            for _ in range(turn_length):
+                env._move_forward()
+                count_length += 1
+
+            # Turn right relative to current heading
+            current_index = directions.index(self.heading)
+            self.heading = directions[(current_index + 1) % 4]  # Update heading
+
+            for _ in range(end_x - start_x):
+                env._move_forward()
+            
+            # Turn left relative to the current heading
+            current_index = directions.index(self.heading)
+            env.heading = directions[(current_index - 1) % 4]  # Update heading
+
+            for _ in range(turn_length):
+                env._move_forward()
+                count_length += 1
+
+            # Turn left relative to the current heading
+            current_index = directions.index(self.heading)
+            env.heading = directions[(current_index - 1) % 4]  # Update heading
 
 class Environment_interaction:
     def __init__(self, chem_data_path, x_start, y_start, z_start=0, confined=False, x_bounds=(0, 250), y_bounds=(0, 250)):
@@ -364,6 +416,8 @@ class Environment_interaction:
             self.y -= 1  # Move down in y-axis
         elif self.heading == Direction.West and (not self.confined or self.x - 1 >= self.x_min):
             self.x -= 1  # Move left in x-axis
+            
+
 
     def is_done(self):
         # To be determined
@@ -381,7 +435,7 @@ class Environment_interaction:
             x_data, y_data, width, min_turn_radius, self.z, direction
         )
         
-        self.collected_data = waypoints
+        self.collected_data = list(waypoints)
 
         # Simulate moving and collecting data along the waypoints
         for x, y, z in waypoints:
@@ -582,3 +636,8 @@ test_confined_gas_level_reward()
 #         z_target=z_start,
 #         data_parameter='pH',
 #         zoom=False)
+
+#%%
+env = Environment_interaction("../SMART-AUVs_OF-June-1c-0002.nc", 50, 200)
+qa = QAgent()
+env.generate_lawnmower_path(10, 5)
