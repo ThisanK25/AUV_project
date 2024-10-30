@@ -1,5 +1,4 @@
 # %%
-import test_header
 import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Callable
@@ -101,3 +100,4 @@ if __name__ == "__main__":
     plot_lawnmower_pattern(agent._actions_performed)
 
 # %%
+
