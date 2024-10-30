@@ -17,7 +17,7 @@ class Q_trainer:
         for episode in range(episodes):
             agent = Q_Agent(self._env)
             agent.q_table = self._q_table
-            agent.run(max_steps_per_episode, lawnmower_size=lawnmover_size)
+            agent.run(lawnmower_size=lawnmover_size, max_steps=max_steps_per_episode)
             self._q_table = agent.q_table
             print(f"Episode {episode + 1}/{episodes} completed.")
             print(f"Collected data: {self._env._collected_data}")
