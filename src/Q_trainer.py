@@ -13,11 +13,11 @@ class Q_trainer:
         self._env = env
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
 
-    def train(self, episodes=500, max_steps_per_episode=2000, lawnmower_size=70):
+    def train(self, episodes=500, max_steps_per_episode=2000, lawnmover_size=70):
         for episode in range(episodes):
             agent = Q_Agent(self._env)
             agent.q_table = self._q_table
-            agent.run(lawnmower_size=lawnmower_size, max_steps=max_steps_per_episode)
+            agent.run(max_steps_per_episode, lawnmower_size=lawnmover_size)
             self._q_table = agent.q_table
             print(f"Episode {episode + 1}/{episodes} completed.")
             print(f"Collected data: {self._env._collected_data}")
@@ -87,7 +87,7 @@ class Q_trainer:
 if __name__ == "__main__":
     env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68, x_bounds=(90, 140), y_bounds=(70, 120))
     trainer = Q_trainer(env)
-    trainer.train(episodes=1, max_steps_per_episode=5000, lawnmower_size=10)
+    trainer.train(episodes=1, max_steps_per_episode=5000, lawnmover_size=5)
     
     # Example of plotting behavior (adjust the chemical_file_path, time_target, etc. as necessary)
     trainer.plot_behavior(
