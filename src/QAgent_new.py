@@ -33,8 +33,8 @@ class Q_Agent:
 
         self._actions_performed: list = []
 
-    def run(self, max_steps = 100) -> None:
-        self.perform_cartesian_lawnmower()
+    def run(self, lawnmower_size, max_steps = 100) -> None:
+        self.perform_cartesian_lawnmower(lawnmower_size)
 
         self._move_to_max_gas_value()
         print(self._position)
@@ -65,12 +65,13 @@ class Q_Agent:
         return next_state
     
     def perform_action(self, action) -> tuple:
+        action = AUV_ACTIONS(action)
+        heading = self._heading.value
         if action == AUV_ACTIONS.RIGHT:
-            self._heading = Direction(Direction.value((self._heading+1)%4))
+            self._heading = Direction((heading+1)%4)
         
         if action == AUV_ACTIONS.LEFT:
-            self._heading = Direction(Direction.value((self._heading-1)%4))
-        
+            self._heading = Direction((heading - 1) % 4) 
         return self._move_forward()
 
 
