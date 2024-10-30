@@ -1,4 +1,5 @@
 # %%
+import test_header
 import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Callable
@@ -79,7 +80,7 @@ def plot_lawnmower_with_gas_levels(chemical_dataset, data_parameter: str, depth:
 
 # Example main section where you create the environment and agent, and run the agent
 if __name__ == "__main__":
-    path = r"../sim/SMART-AUVs_OF-June-1c-0002.nc"
+    path = r"./sim/SMART-AUVs_OF-June-1c-0002.nc"
     env = Q_Environment(Path(path)) 
     chemical_dataset = chem_utils.load_chemical_dataset(path)
 
