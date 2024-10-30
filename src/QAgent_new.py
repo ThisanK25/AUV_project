@@ -37,11 +37,11 @@ class Q_Agent:
         self.perform_cartesian_lawnmower()
 
         self._move_to_max_gas_value()
+        print(self._position)
         reward = 0
         for step in range(max_steps):
             current_state = self._env.get_state_from_position(self._position, self._heading)
             # Convert state to tuple of integers
-
             current_state = tuple(map(lambda x: x.value, current_state))
             action = self.choose_action(current_state)
             next_state = self.execute_action(action)

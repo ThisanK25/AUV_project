@@ -17,7 +17,7 @@ class Q_trainer:
     
     def train(self, episodes = 500, max_steps_per_episode = 2000):
         for episode in range(episodes):
-            agent = Q_Agent(self._env, start_position = (200, 200, 68))
+            agent = Q_Agent(self._env)
             agent.q_table = self._q_table
             agent.run(max_steps_per_episode)
             self._q_table = agent._q_table
@@ -25,7 +25,7 @@ class Q_trainer:
             if episode % 100 == 0:
                 print(agent._actions_performed)
         pprint(self._q_table)
-        with open("q_table.pkl", "xb") as f:
+        with open("q_table.pkl", "wb") as f:
             pickle.dump(self._q_table, f)
     
     def plot_behavior(self, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False):
@@ -82,5 +82,5 @@ class Q_trainer:
 if __name__ == "__main__":
     env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68)
     trainer = Q_trainer(env)
-    trainer.train(episodes=1, max_steps_per_episode=100)
+    trainer.train(episodes=1, max_steps_per_episode=5000)
     

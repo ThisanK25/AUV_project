@@ -18,7 +18,7 @@ class Q_Environment:
         self._reading_radius: int = reading_radius
         self._collected_data = np.full((x_bounds[1] - x_bounds[0], y_bounds[1] - y_bounds[0]), np.inf, dtype=np.float64)
         self._current_classification_limit: list[float] = self._set_classification_limit(depth)
-        self._depth:int = depth
+        self._depth: int = depth
 
     def _set_classification_limit(self, depth) -> list[float]:
         ph_69 = [7.7, 7.5] 
@@ -71,7 +71,7 @@ class Q_Environment:
             right_pos = (x - steps, y, z)
         elif heading == Direction.West:
             front_pos = (x - steps, y, z)
-            left_pos = (x, y - steps, z)
+            left_pos =  (x, y - steps, z)
             right_pos = (x, y + steps, z)
         
         # Extract actual pH values (not classified), this stores the values in the grid
@@ -87,10 +87,10 @@ class Q_Environment:
         x, y, z = pos
         metadata = (x, y, z, time_target, self._reading_radius)
 
-        # The first value in the tuple is the average value.
         avg_value = self._get_table_data_at_position(pos)
         if avg_value == float('inf'):
             avg_value, _ = chem_utils.extract_chemical_data_for_volume(self._chemical_dataset, metadata, data_variable="pH")
+        
         # store the data in the table
         self._insert_data_value(avg_value, pos)
         return avg_value
