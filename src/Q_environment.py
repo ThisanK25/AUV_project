@@ -13,11 +13,13 @@ class Q_Environment:
 
         self._chemical_dataset: Dataset = chem_utils.load_chemical_dataset(chem_data_path)
         self._confined: bool = confined
-        self._x_size = x_bounds
-        self._y_size = y_bounds
-        self._reading_radius = reading_radius
+        self._x_size: tuple[int, int] = x_bounds
+        self._y_size: tuple[int, int] = y_bounds
+        self._reading_radius: int = reading_radius
         self._collected_data = np.zeros((x_bounds[1]-x_bounds[0], y_bounds[1] - y_bounds[0]), dtype=np.float64)
-        self._current_classification_limit = self._set_classification_limit(depth)
+        self._collected_data + 10.0
+        self._current_classification_limit: list[float] = self._set_classification_limit(depth)
+        self._depth:int = depth
 
     def _set_classification_limit(self, depth) -> list[float]:
         ph_69 = [7.7, 7.5] 
@@ -128,5 +130,16 @@ class Q_Environment:
         return self._collected_data[x-self._x_size[0]][y-self._y_size[0]]
     
     @property
-    def min_pH_position(self):
-        return np.argmin(self._collected_data)
+    def min_pH_position(self) -> np.intp:
+        min_pH_position = np.unravel_index(np.argmin(self._collected_data), self._collected_data.shape)
+        
+        return (min_pH_position[0] + self._x_size[0], min_pH_position[1] + self._y_size[0], self._depth)  
+    @property
+    def upper_left_corner(self) -> tuple[int, int, int]:
+        return self._x_size[0], self._y_size[0], self._depth
+    
+    @property
+    def lower_right_corner(self) -> tuple[int, int, int]:
+        return self._x_size[1], self._y_size[1], self._depth
+    
+        
