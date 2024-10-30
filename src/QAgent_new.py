@@ -72,7 +72,6 @@ class Q_Agent:
         
         if action == AUV_ACTIONS.LEFT:
             self._heading = Direction((heading - 1) % 4) 
-        print(self._heading, action)
         return self._move_forward()
 
 
