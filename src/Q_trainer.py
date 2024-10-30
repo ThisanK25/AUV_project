@@ -19,7 +19,7 @@ class Q_trainer:
             agent.q_table = self._q_table
             agent.run(max_steps_per_episode)
             self._q_table = agent._q_table
-
+            print(episode)
             if episode % 100 == 0:
                 print(agent._actions_performed)
         pprint(self._q_table)
