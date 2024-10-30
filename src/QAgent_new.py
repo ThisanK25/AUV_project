@@ -159,7 +159,7 @@ class Q_Agent:
 
 
 if __name__ == "__main__":
-    env= Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc")) 
+    env= Q_Environment(Path(r"../../SMART-AUVs_OF-June-1c-0002.nc")) 
 
         
 

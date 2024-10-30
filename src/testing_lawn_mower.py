@@ -80,7 +80,7 @@ def plot_lawnmower_with_gas_levels(chemical_dataset, data_parameter: str, depth:
 
 # Example main section where you create the environment and agent, and run the agent
 if __name__ == "__main__":
-    path = r"../sim/SMART-AUVs_OF-June-1c-0002.nc"
+    path = r"../../SMART-AUVs_OF-June-1c-0002.nc"
     env = Q_Environment(Path(path), depth=68) 
     trainer = Q_trainer(env)
     trainer.train(episodes=1, max_steps_per_episode=100)
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     depth = 68  # Adjust depth as neede
     
     # Run the perform_cartesian_lawnmower method to generate the path
-    agent.perform_cartesian_lawnmower()
+    agent.perform_cartesian_lawnmower(turn_length=10)
     plot_lawnmower_with_gas_levels(chemical_dataset, data_parameter, depth, time_target, agent._actions_performed)
 
     
