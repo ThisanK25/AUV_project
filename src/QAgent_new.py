@@ -33,13 +33,10 @@ class Q_Agent:
 
         self._actions_performed: list = []
 
-    def run(self, max_steps= 100) -> None:
+    def run(self, max_steps = 100) -> None:
         self.perform_cartesian_lawnmower()
-        print("lawnmover done")
 
         self._move_to_max_gas_value()
-        print("moved to min")
-        # min_ph = self._env.min_pH_position
         reward = 0
         for step in range(max_steps):
             current_state = self._env.get_state_from_position(self._position, self._heading)

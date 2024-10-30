@@ -21,6 +21,7 @@ class Q_trainer:
             agent.q_table = self._q_table
             agent.run(max_steps_per_episode)
             self._q_table = agent._q_table
+            print(self._env._collected_data)
             if episode % 100 == 0:
                 print(agent._actions_performed)
         pprint(self._q_table)
@@ -81,5 +82,5 @@ class Q_trainer:
 if __name__ == "__main__":
     env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68)
     trainer = Q_trainer(env)
-    trainer.train()
+    trainer.train(episodes=1, max_steps_per_episode=100)
     

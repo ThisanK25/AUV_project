@@ -16,8 +16,7 @@ class Q_Environment:
         self._x_size: tuple[int, int] = x_bounds
         self._y_size: tuple[int, int] = y_bounds
         self._reading_radius: int = reading_radius
-        self._collected_data = np.zeros((x_bounds[1]-x_bounds[0], y_bounds[1] - y_bounds[0]), dtype=np.float64)
-        self._collected_data + 10.0
+        self._collected_data = np.full((x_bounds[1] - x_bounds[0], y_bounds[1] - y_bounds[0]), np.inf, dtype=np.float64)
         self._current_classification_limit: list[float] = self._set_classification_limit(depth)
         self._depth:int = depth
 
@@ -90,7 +89,7 @@ class Q_Environment:
 
         # The first value in the tuple is the average value.
         avg_value = self._get_table_data_at_position(pos)
-        if avg_value == 0:
+        if avg_value == float('inf'):
             avg_value, _ = chem_utils.extract_chemical_data_for_volume(self._chemical_dataset, metadata, data_variable="pH")
         # store the data in the table
         self._insert_data_value(avg_value, pos)
