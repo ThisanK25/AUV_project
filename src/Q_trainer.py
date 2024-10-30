@@ -13,21 +13,22 @@ class Q_trainer:
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
 
     
-    def train(self, episodes = 500, max_steps_per_episode = 50000):
+    def train(self, episodes = 500, max_steps_per_episode = 2000):
         for episode in range(episodes):
             agent = Q_Agent(self._env)
             agent.q_table = self._q_table
             agent.run(max_steps_per_episode)
             self._q_table = agent._q_table
 
+            if episode % 100 == 0:
+                print(agent._actions_performed)
         pprint(self._q_table)
         with open("q_table.pkl", "xb") as f:
             pickle.dump(self._q_table, f)
 
 
 if __name__ == "__main__":
-    env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"))
+    env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68)
     trainer = Q_trainer(env)
     trainer.train()
-    print("end")
     

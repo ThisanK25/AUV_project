@@ -16,4 +16,5 @@ class AUV_ACTIONS(Enum):
     FORWARD = 2
 
 
-
+if __name__ == "__main__":
+    print(list(Direction))

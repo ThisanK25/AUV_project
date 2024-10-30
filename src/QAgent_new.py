@@ -27,14 +27,14 @@ class Q_Agent:
 
         # metadata
         self._env = env
-        self._position: tuple[int, int, int] = (0, 0, 0)
+        self._position: tuple[int, int, int] = env.upper_left_corner
         self._heading = Direction.North
 
         self._actions_performed: list = []
 
     def run(self, max_steps= 100):
-        # ! Lawnmower goes here
-        # self._move_to_max_gas_value()
+        self.perform_cartesian_lawnmower()
+        self._move_to_max_gas_value()
         # min_ph = self._env.min_pH_position
         reward = 0
         for step in range(max_steps):
@@ -73,7 +73,8 @@ class Q_Agent:
         
         return self._move_forward()
 
-    def _move_forward(self) -> tuple:
+
+    def _next_position(self) -> tuple[int, int, int]:
         x, y, z = self._position
         match self._heading:
             case Direction.North:
@@ -84,7 +85,10 @@ class Q_Agent:
                 new_pos = (x + 1, y, z)
             case Direction.West:
                 new_pos = (x-1, y, z)
-        
+        return new_pos
+    
+    def _move_forward(self) -> tuple:
+        new_pos = self._next_position()
         if self._env.inbounds(new_pos):
            self._position = new_pos # We can throw a ValueError here to catch during training.
         return tuple(map(lambda x: x.value, self._env.get_state_from_position(self._position, self._heading)))
@@ -97,7 +101,7 @@ class Q_Agent:
           target : tuple[int, int, int] - x, y, z coords
         output: None
         """
-        x_target, y_target , _= self._env.maximum_gas_position
+        x_target, y_target , _= self._env.min_pH_position
         x, y, _ = self._position
         x_dir = Direction.East if x_target - x < 0 else Direction.West
         y_dir = Direction.North if x_target - x < 0 else Direction.South
@@ -109,25 +113,42 @@ class Q_Agent:
         while y_target - self._position[1] != 0:
             self._move_forward()
         
-    def generate_lawnmower_path(self, width=10, min_turn_radius=5, direction='y'):
-        """
-        Generates a lawnmower path and collects initial data.
-        """
+    def perform_cartesian_lawnmower(self, turn_length:int = 10, start_direction: Direction = Direction.East) -> None:
+        def move_east():
+            while self._env.inbounds(self._next_position()):
+                self._move_forward()
+            self._heading = Direction.South
+        
+        def move_west():
+            while self._env.inbounds(self._next_position()):
+                self._move_forward()
 
-        # Generate waypoints for the lawnmower pattern
-        x_data = np.linspace(0, 250, 100)
-        y_data = np.linspace(0, 250, 100)
-        waypoints, x_coords, y_coords, z_coords = lp.generate_lawnmower_waypoints(
-            x_data, y_data, width, min_turn_radius, 68, direction
-        )
-        print(x_coords)
-        x_coords = zip(map(int, x_coords), map(int, y_coords))
-        print([x for x in x_coords])
-        # Simulate moving and collecting data along the waypoints
-        #for x, y, z in waypoints:
-        #    self.x, self.y, self.z = x, y, z
-        #    pH_readings = self._env.get_current_pH_values(self._position, self._heading)
-        #    self.collected_data.append((x, y, z, pH_readings))
+            self._heading = Direction.South
+        
+        def move_south(turn_dir:Direction):
+            count = 0
+            while self._env.inbounds(self._next_position()) and count < turn_length:
+                self._move_forward()
+                count += 1
+            self._heading = Direction.East if turn_dir == Direction.West else Direction.West
+        
+        self._heading = start_direction
+        previous_heading = self._heading
+        while self._position != self._env.lower_right_corner:
+            match self._heading:
+                case Direction.East:
+                    move_east()
+                    previous_heading = Direction.East
+                    break
+                case Direction.South:
+                    move_south(previous_heading)
+                    break
+                case Direction.West:
+                    move_west()
+                    previous_heading = Direction.West
+                    break
+            print(self._heading, num_actions)
+      
 
     @property
     def q_table(self):
