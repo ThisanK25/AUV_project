@@ -12,7 +12,8 @@ class Q_Agent:
                  alpha:float   = 0.1, 
                  gamma:float   = 0.9, 
                  epsilon:float = 0.1,
-                 reward_func = reward_gas_level) -> None:
+                 reward_func = reward_gas_level,
+                 start_position = None) -> None:
         
         self._alpha: float   = alpha
         self._gamma: float   = gamma
@@ -27,14 +28,17 @@ class Q_Agent:
 
         # metadata
         self._env = env
-        self._position: tuple[int, int, int] = env.upper_left_corner
+        self._position: tuple[int, int, int] = start_position if start_position else env.upper_left_corner
         self._heading = Direction.North
 
         self._actions_performed: list = []
 
-    def run(self, max_steps= 100):
+    def run(self, max_steps= 100) -> None:
         self.perform_cartesian_lawnmower()
+        print("lawnmover done")
+
         self._move_to_max_gas_value()
+        print("moved to min")
         # min_ph = self._env.min_pH_position
         reward = 0
         for step in range(max_steps):
@@ -77,9 +81,9 @@ class Q_Agent:
         x, y, z = self._position
         match self._heading:
             case Direction.North:
-                new_pos = (x, y +1, z)
-            case Direction.South:
                 new_pos = (x, y - 1, z)
+            case Direction.South:
+                new_pos = (x, y + 1, z)
             case Direction.East:
                 new_pos = (x + 1, y, z)
             case Direction.West:
@@ -89,9 +93,8 @@ class Q_Agent:
     def _move_forward(self) -> tuple:
         new_pos = self._next_position()
         if self._env.inbounds(new_pos):
-           self._position = new_pos # We can throw a ValueError here to catch during training.
-        print(self._position)
-        self._actions_performed.append(new_pos[2:])
+            self._position = new_pos # We can throw a ValueError here to catch during training.
+            self._actions_performed.append(new_pos[:2])
         return tuple(map(lambda x: x.value, self._env.get_state_from_position(self._position, self._heading)))
 
 
@@ -104,17 +107,18 @@ class Q_Agent:
         """
         x_target, y_target , _= self._env.min_pH_position
         x, y, _ = self._position
-        x_dir = Direction.East if x_target - x < 0 else Direction.West
-        y_dir = Direction.North if x_target - x < 0 else Direction.South
+        x_dir = Direction.East  if x_target - x  > 0 else Direction.West
+        y_dir = Direction.North if y_target - y < 0 else Direction.South
         self._heading = x_dir
         while x_target - self._position[0] != 0:
             self._move_forward()
         
+
         self._heading = y_dir
         while y_target - self._position[1] != 0:
             self._move_forward()
         
-    def perform_cartesian_lawnmower(self, turn_length:int = 10, start_direction: Direction = Direction.East) -> None:
+    def perform_cartesian_lawnmower(self, turn_length:int = 70, start_direction: Direction = Direction.East) -> None:
         def move_east():
             while self._env.inbounds(self._next_position()):
                 self._move_forward()
@@ -140,16 +144,13 @@ class Q_Agent:
                 case Direction.East:
                     move_east()
                     previous_heading = Direction.East
-                    break
+                    
                 case Direction.South:
                     move_south(previous_heading)
-                    break
+                    
                 case Direction.West:
                     move_west()
                     previous_heading = Direction.West
-                    break
-            print(self._heading)
-      
 
     @property
     def q_table(self):

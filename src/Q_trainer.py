@@ -6,6 +6,7 @@ import numpy as np
 import pickle # Too store the q-table
 import matplotlib.pyplot as plt
 
+from utils import chem_utils
 
 
 class Q_trainer:
@@ -16,11 +17,10 @@ class Q_trainer:
     
     def train(self, episodes = 500, max_steps_per_episode = 2000):
         for episode in range(episodes):
-            agent = Q_Agent(self._env)
+            agent = Q_Agent(self._env, start_position = (200, 200, 68))
             agent.q_table = self._q_table
             agent.run(max_steps_per_episode)
             self._q_table = agent._q_table
-            print(episode)
             if episode % 100 == 0:
                 print(agent._actions_performed)
         pprint(self._q_table)
