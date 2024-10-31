@@ -15,13 +15,24 @@ class Q_trainer:
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
         self._policy = policy
 
+<<<<<<< HEAD
     def train(self, episodes=10, max_steps_per_episode=2000, lawnmower_size=70):
+=======
+    def train(self, episodes=500, max_steps_per_episode=2000, lawnmover_size=70):
+>>>>>>> 17f8c3b0efbe2d8c2d8dc1b8ddfe32373acd96d0
         for episode in range(episodes):
             agent = Q_Agent(self._env, policy=self._policy)
             agent.q_table = self._q_table
-            agent.run(lawnmower_size=lawnmower_size, max_steps=max_steps_per_episode)
+            agent.run(lawnmower_size=lawnmover_size, max_steps=max_steps_per_episode)
             self._q_table = agent.q_table
             print(f"Episode {episode + 1}/{episodes} completed.")
+<<<<<<< HEAD
+=======
+            print(f"Collected data: {self._env._collected_data}")
+            # if episode % 100 == 0:
+            #     print(f"Actions performed in episode {episode}: {agent._actions_performed}")
+
+>>>>>>> 17f8c3b0efbe2d8c2d8dc1b8ddfe32373acd96d0
         pprint(self._q_table)
         
         with open("q_table.pkl", "wb") as f:
@@ -30,8 +41,17 @@ class Q_trainer:
 
     def _save_position_history(self, agent: Q_Agent):
         self.position_history = agent._actions_performed
+    
+    def save_q_table(self, filename):
+        with open(filename, "wb") as f:
+            pickle.dump(self._q_table, f)
+        print(f"Q-table saved to {filename}")
 
+<<<<<<< HEAD
     def plot_behavior(self, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False) -> None:
+=======
+    def plot_behavior(self, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, figure_name=None):
+>>>>>>> 17f8c3b0efbe2d8c2d8dc1b8ddfe32373acd96d0
         plt.rcParams.update({
             "text.usetex": False,
             "font.family": "Dejavu Serif",
@@ -80,10 +100,37 @@ class Q_trainer:
         plt.title('Agent Path with Chemical Environment')
         plt.grid(True)
         plt.legend()
-        plt.show()
 
+        if figure_name:
+            plt.savefig(figure_name)
+            plt.close()
+            print(f"Saved figure: {figure_name}")
+        else:
+            plt.show()
+
+
+
+def run_experiments():
+    episodes = 10
+    max_steps_per_episode = 5000
+    for size in range(10, 101, 5):
+        env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68, x_bounds=(0, 250), y_bounds=(0, 250))
+        trainer = Q_trainer(env)
+        trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size)
+        q_table_filename = f"q_table_lawnmover_size_{size}_steps_per_episode_{max_steps_per_episode}.pkl"
+        trainer.save_q_table(q_table_filename)
+        figure_name = f"training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}.png"
+        trainer.plot_behavior(
+            chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
+            time_target=0,
+            z_target=68,
+            data_parameter='pH',
+            zoom=False,
+            figure_name=figure_name
+        )
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     for depth in range(64, 70):
         for lawn_size in range(20, 101, 20):
             env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth,)
@@ -99,3 +146,18 @@ if __name__ == "__main__":
                 zoom=True
             )
 
+=======
+    run_experiments()
+    # env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68, x_bounds=(0, 250), y_bounds=(0, 250))
+    # trainer = Q_trainer(env)
+    # trainer.train(episodes=10, max_steps_per_episode=5000, lawnmover_size=70)
+    
+    # # Example of plotting behavior (adjust the chemical_file_path, time_target, etc. as necessary)
+    # trainer.plot_behavior(
+    #     chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",  
+    #     time_target=0,
+    #     z_target=68,
+    #     data_parameter='pH',
+    #     zoom=False
+    # )
+>>>>>>> 17f8c3b0efbe2d8c2d8dc1b8ddfe32373acd96d0
