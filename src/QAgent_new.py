@@ -34,6 +34,8 @@ class Q_Agent:
         self._env: Q_Environment = env
         self._position: tuple[int, int, int] = start_position if start_position else env.upper_left_corner
         self._heading = Direction.North
+        
+        self._visited = set()
 
         self._actions_performed: list = []
         
@@ -90,6 +92,7 @@ class Q_Agent:
         return new_pos
     
     def _move_forward(self) -> tuple:
+        self._visited.add(self._position)
         new_pos = self._next_position()
         if self._env.inbounds(new_pos):
             self._position = new_pos # We can throw a ValueError here to catch during training.
@@ -107,12 +110,11 @@ class Q_Agent:
         x_target, y_target , _= self._env.min_pH_position
         x, y, _ = self._position
         x_dir = Direction.East  if x_target - x  > 0 else Direction.West
-        y_dir = Direction.North if y_target - y < 0 else Direction.South
+        y_dir = Direction.North if y_target - y  < 0 else Direction.South
         self._heading = x_dir
         while x_target - self._position[0] != 0:
             self._move_forward()
         
-
         self._heading = y_dir
         while y_target - self._position[1] != 0:
             self._move_forward()
@@ -143,13 +145,16 @@ class Q_Agent:
                 case Direction.East:
                     move_east()
                     previous_heading = Direction.East
-                    
+
                 case Direction.South:
                     move_south(previous_heading)
-                    
+
                 case Direction.West:
                     move_west()
                     previous_heading = Direction.West
+
+    def visited(self):
+        return self._position in self._visited
 
     @property
     def q_table(self) -> np.ndarray:

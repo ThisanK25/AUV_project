@@ -1,7 +1,7 @@
 from QAgent_Enums import PH_Reading
 import numpy as np
 
-def reward_gas_level(_, next_state):
+def reward_gas_level(_, next_state) -> int:
     """
     High reward for high gas reading, medium reward for medium reading, negative for low reading.
     """
@@ -13,7 +13,7 @@ def reward_gas_level(_, next_state):
     else:
         return 5  # Medium gas reading
 
-def reward_exposure_time(agent, next_state):
+def reward_exposure_time(agent, next_state) -> int:
     """
     Longer exposure to high or medium gas readings increases the reward.
     """
@@ -26,10 +26,26 @@ def reward_exposure_time(agent, next_state):
         return agent.time_steps_in_medium
     return -1  # Penalty for low exposure
 
-def reward_plume_field(_, next_state):
+
+def reward_trace_area(agent, next_state:tuple[PH_Reading, PH_Reading, PH_Reading]) -> int:
+    """
+    Positive reward if the agent is on a state boundery
+    """
+    left, right, forward = next_state
+    if left == forward == right:
+        if left == PH_Reading.HIGH:
+            return -3
+        return 0
+    if left != PH_Reading.HIGH and right == PH_Reading.HIGH:
+        return 5
+    return 1
+
+def reward_plume_field(agent, next_state)->int:
     """
     Negative reward if agent exits plume, positive if in plume, and higher if gas reading gets higher.
     """
+    if agent.visited():
+        return -5
     min_val = np.min(next_state)
     min_pH = min(next_state)
     if min_val == PH_Reading.HIGH:

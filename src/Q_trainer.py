@@ -5,6 +5,7 @@ from Q_environment import Q_Environment
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
+from reward_funcs import reward_gas_level, reward_trace_area
 from utils import chem_utils
 
 
@@ -13,9 +14,9 @@ class Q_trainer:
         self._env = env
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
 
-    def train(self, episodes=500, max_steps_per_episode=2000, lawnmover_size=70):
+    def train(self, episodes=1, max_steps_per_episode=500, lawnmover_size=70, reward_func = reward_gas_level):
         for episode in range(episodes):
-            agent = Q_Agent(self._env)
+            agent = Q_Agent(self._env, reward_func=reward_func)
             agent.q_table = self._q_table
             agent.run(lawnmower_size=lawnmover_size, max_steps=max_steps_per_episode)
             self._q_table = agent.q_table
@@ -96,23 +97,24 @@ class Q_trainer:
 
 
 
-def run_experiments():
-    episodes = 10
+def run_experiments() -> None:
+    episodes = 3
     max_steps_per_episode = 5000
-    for size in range(10, 101, 5):
-        env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68, x_bounds=(0, 250), y_bounds=(0, 250))
+    depth = 65
+    for size in range(80, 100, 10):
+        env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
         trainer = Q_trainer(env)
-        trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size)
+        trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area)
         q_table_filename = f"q_table_lawnmover_size_{size}_steps_per_episode_{max_steps_per_episode}.pkl"
         trainer.save_q_table(q_table_filename)
         figure_name = f"training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}.png"
         trainer.plot_behavior(
             chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
             time_target=0,
-            z_target=68,
+            z_target=depth,
             data_parameter='pH',
             zoom=False,
-            figure_name=figure_name
+            figure_name=None
         )
 
 if __name__ == "__main__":
