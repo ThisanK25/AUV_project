@@ -4,6 +4,7 @@ import numpy as np
 from QAgent_Enums import Direction, AUV_ACTIONS
 from Q_environment import Q_Environment
 from reward_funcs import reward_gas_level
+from policy_funcs import episilon_greedy
 from utils import lawnmower_path as lp
 
 class Q_Agent:
@@ -12,32 +13,33 @@ class Q_Agent:
                  alpha:float   = 0.1, 
                  gamma:float   = 0.9, 
                  epsilon:float = 0.1,
+                 temperature:float = 1.0,
                  reward_func = reward_gas_level,
+                 policy = episilon_greedy,
                  start_position = None) -> None:
         
         self._alpha: float   = alpha
         self._gamma: float   = gamma
         self._epsilon: float = epsilon
-
+        self._temperature: float = temperature
         
         # I prefere this setup with the callable as an argument
         self._reward_function: Callable[..., int] = reward_func
+        self._policy = policy
         # I dont like these.
         self._time_steps_in_high: int   = 0
         self._time_steps_in_medium: int = 0
 
         # metadata
-        self._env = env
+        self._env: Q_Environment = env
         self._position: tuple[int, int, int] = start_position if start_position else env.upper_left_corner
         self._heading = Direction.North
 
         self._actions_performed: list = []
-
+        
     def run(self, lawnmower_size = 70, max_steps = 100) -> None:
         self.perform_cartesian_lawnmower(lawnmower_size)
-
         self._move_to_max_gas_value()
-        print(self._position)
         reward = 0
         for step in range(max_steps):
             current_state = self._env.get_state_from_position(self._position, self._heading)
@@ -49,10 +51,9 @@ class Q_Agent:
             self.update_q_table(current_state, action, reward, next_state)
             current_state = next_state
 
+
     def choose_action(self, state:tuple[int, int, int]) -> int:
-        if np.random.rand() < self._epsilon:
-            return np.random.choice(3)
-        return np.argmax(self.q_table[state])
+        return self._policy(self, state)
     
     def update_q_table(self, state:int, action:int, reward:int, next_state:int) -> None:
         current_q = self._q_table[state][action]
@@ -72,7 +73,6 @@ class Q_Agent:
         
         if action == AUV_ACTIONS.LEFT:
             self._heading = Direction((heading - 1) % 4) 
-        print(self._heading, action)
         return self._move_forward()
 
 
@@ -152,12 +152,16 @@ class Q_Agent:
                     previous_heading = Direction.West
 
     @property
-    def q_table(self):
+    def q_table(self) -> np.ndarray:
         return self._q_table
     
+    @property
+    def epsilon(self) -> float:
+        return self._epsilon
+    
     @q_table.setter
-    def q_table(self, table):
-        self._q_table = table
+    def q_table(self, table:np.ndarray) -> None:
+        self._q_table: np.ndarray = table
 
 
 if __name__ == "__main__":
