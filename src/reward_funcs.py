@@ -37,7 +37,7 @@ def reward_plume_field(_, next_state):
     reward = 0
     # Adjust reward based on gas readings
     if min_pH == PH_Reading.LOW:
-        reward += 10  # Strongest gas reading
+        reward += 2  # Strongest gas reading
     elif min_pH == PH_Reading.MEDIUM:
-        reward += 5   # Medium gas reading
+        reward += 1   # Medium gas reading
     return reward

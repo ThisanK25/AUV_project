@@ -96,18 +96,16 @@ class Q_trainer:
 
 
 
-
-
 def run_experiments():
     episodes = 10
-    max_steps_per_episode = 1000
-    for size in range(10, 101, 10):
+    max_steps_per_episode = 5000
+    for size in range(10, 101, 5):
         env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=68, x_bounds=(0, 250), y_bounds=(0, 250))
         trainer = Q_trainer(env)
         trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size)
-        q_table_filename = f"q_table_lawnmover_size_{size}.pkl"
+        q_table_filename = f"q_table_lawnmover_size_{size}_steps_per_episode_{max_steps_per_episode}.pkl"
         trainer.save_q_table(q_table_filename)
-        figure_name = f"training_lawnmover_size_{size}.png"
+        figure_name = f"training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}.png"
         trainer.plot_behavior(
             chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
             time_target=0,
