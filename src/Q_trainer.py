@@ -99,9 +99,9 @@ class Q_trainer:
 
 def run_experiments() -> None:
     episodes = 3
-    max_steps_per_episode = 5000
-    for size in range(10, 101, 10):
-        for depth in range(64, 70):
+    max_steps_per_episode = 500
+    for size in range(10, 101, 20):
+        for depth in range(66, 70):
             env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
             trainer = Q_trainer(env)
             trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area)
