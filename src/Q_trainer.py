@@ -67,8 +67,8 @@ class Q_trainer:
             x_coords, y_coords = zip(*self.position_history)
             ax.plot(x_coords, y_coords, marker='o', color='black', label='Agent Path')
 
-            for i, (x_pos, y_pos) in enumerate(self.position_history):
-                ax.annotate(f'{i}', (x_pos, y_pos))
+            #for i, (x_pos, y_pos) in enumerate(self.position_history):
+            #    ax.annotate(f'{i}', (x_pos, y_pos))
 
             if zoom:
                 # Calculate bounds
@@ -100,22 +100,23 @@ class Q_trainer:
 def run_experiments() -> None:
     episodes = 3
     max_steps_per_episode = 5000
-    depth = 65
-    for size in range(80, 100, 10):
-        env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
-        trainer = Q_trainer(env)
-        trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area)
-        q_table_filename = f"q_table_lawnmover_size_{size}_steps_per_episode_{max_steps_per_episode}.pkl"
-        trainer.save_q_table(q_table_filename)
-        figure_name = f"training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}.png"
-        trainer.plot_behavior(
-            chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
-            time_target=0,
-            z_target=depth,
-            data_parameter='pH',
-            zoom=False,
-            figure_name=None
-        )
+    for size in range(10, 101, 10):
+        for depth in range(64, 70):
+            env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
+            trainer = Q_trainer(env)
+            trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area)
+            q_table_filename = f"q_table_reward_trace_area_lawnmover_size_{size}_steps_per_episode_{max_steps_per_episode}.pkl"
+            trainer.save_q_table(q_table_filename)
+            for zoom in [True, False]:
+                figure_name = f"training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}_reward_trace_area_ZOOM:_{zoom}.png"
+                trainer.plot_behavior(
+                    chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
+                    time_target=0,
+                    z_target=depth,
+                    data_parameter='pH',
+                    zoom=zoom,
+                    figure_name=figure_name
+                )
 
 if __name__ == "__main__":
     run_experiments()
