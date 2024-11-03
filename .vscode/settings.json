@@ -3,6 +3,8 @@
         "./utils",
         "./src",
         "./dist",
-        "./sim"
+        "./sim",
+        "./results",
+        "."
     ]
 }

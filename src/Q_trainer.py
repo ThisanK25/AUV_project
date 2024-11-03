@@ -5,6 +5,7 @@ from Q_environment import Q_Environment
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
+from policy_funcs import episilon_greedy, soft_max
 from reward_funcs import reward_gas_level, reward_trace_area
 from utils import chem_utils
 
@@ -14,9 +15,9 @@ class Q_trainer:
         self._env = env
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
 
-    def train(self, episodes=1, max_steps_per_episode=500, lawnmover_size=70, reward_func = reward_gas_level):
+    def train(self, episodes=1, max_steps_per_episode=500, lawnmover_size=70, reward_func = reward_gas_level, policy = episilon_greedy):
         for episode in range(episodes):
-            agent = Q_Agent(self._env, reward_func=reward_func)
+            agent = Q_Agent(self._env, reward_func=reward_func, policy=policy)
             agent.q_table = self._q_table
             agent.run(lawnmower_size=lawnmover_size, max_steps=max_steps_per_episode)
             self._q_table = agent.q_table
@@ -98,17 +99,15 @@ class Q_trainer:
 
 
 def run_experiments() -> None:
-    episodes = 3
+    episodes =   1
     max_steps_per_episode = 5000
-    for size in range(10, 101, 10):
-        for depth in range(64, 70):
+    for size in (20, 50, 80):
+        for depth in range(66, 69):
             env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
-            trainer = Q_trainer(env)
-            trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area)
-            q_table_filename = f"q_table_reward_trace_area_lawnmover_size_{size}_steps_per_episode_{max_steps_per_episode}.pkl"
-            trainer.save_q_table(q_table_filename)
-            for zoom in [True, False]:
-                figure_name = f"training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}_reward_trace_area_ZOOM:_{zoom}.png"
+            trainer = Q_trainer(env, )
+            trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area, policy=soft_max)
+            for zoom in [False]:
+                figure_name = rf"./results/plots/reward_trace_area/training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}_reward_trace_area_depth_{depth}.png"
                 trainer.plot_behavior(
                     chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
                     time_target=0,
