@@ -107,7 +107,7 @@ def run_experiments() -> None:
             trainer = Q_trainer(env, )
             trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area, policy=soft_max)
             for zoom in [False]:
-                figure_name = rf"./results/plots/reward_trace_area/training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}_reward_trace_area_depth_{depth}.png"
+                figure_name = rf"./results/plots/softmax_reward_trace_area/training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}_reward_trace_area_depth_{depth}.png"
                 trainer.plot_behavior(
                     chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
                     time_target=0,
