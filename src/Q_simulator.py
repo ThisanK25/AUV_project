@@ -10,7 +10,7 @@ from Q_environment import Q_Environment
 
 
 class Q_Simulator:
-    def __init__(self, env: Q_Environment, agent: Q_Agent | None):
+    def __init__(self, env: Q_Environment, agent: Q_Agent | None) -> None:
         self._agent: Q_Agent     = agent
         self._env: Q_Environment = env
         self._gas_coords: set = self._find_gas_coords(env.datapath)
@@ -83,7 +83,7 @@ class Q_Simulator:
             self._agent.q_table = q_table
 
 
-def fetch_sim_files(directory = Path(r"./sim")) -> filter[Path]:
+def fetch_sim_files(directory = Path(r"./sim")) -> filter:
     return filter(Path.is_file, directory.iterdir())
 
 
