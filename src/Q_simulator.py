@@ -88,7 +88,7 @@ def fetch_sim_files(directory = Path(r"./sim")) -> filter:
 
 
 if __name__ == "__main__":
-    with tqdm(total=len(list(fetch_sim_files())) * 5, ncols=100, desc="Reading files", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red') as pbar:
+    with tqdm(total=len(list(fetch_sim_files())) * 6, ncols=100, desc="Reading files", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red') as pbar:
         for file_path in fetch_sim_files():
             for depth in range(64, 70):
                 env   = Q_Environment(file_path, depth=depth)
