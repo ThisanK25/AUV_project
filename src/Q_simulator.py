@@ -51,17 +51,18 @@ class Q_Simulator:
             pickle.dump(gas_coords, plume_map)
         return gas_coords
     
-    def test_agent(self, max_steps=2000):
-        agent.run(max_steps = max_steps)
-        print(agent.gas_coords_visited(self._gas_coords))
+    def test_agent(self, max_steps=2000) -> None:
+        # We could create the agent here as well I suppose
+        self._agent.run(max_steps = max_steps)
+        print(self._agent.gas_coords_visited(self._gas_coords))
 
     @property
-    def agent(self):
+    def agent(self) -> Q_Agent:
         return self._agent
 
     @agent.setter
     def agent(self, q_table, alpha=0.1, gamma=0.9, epsilon=0.1, temp=1, 
-              reward_func=None, policy=None):
+              reward_func=None, policy=None) -> None:
         if reward_func is None:
             reward_func = reward_funcs.reward_trace_area
         if policy is None:
@@ -84,9 +85,8 @@ class Q_Simulator:
 
 if __name__ == "__main__":
     env   = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=67)
-    agent = Q_Agent(env)
-    sim = Q_Simulator(env, agent)
-    print(sim.test_agent())
+    sim = Q_Simulator(env, Q_Agent(env))
+    sim.test_agent()
 
 
 

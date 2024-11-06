@@ -12,7 +12,7 @@ from utils import chem_utils
 
 class Q_trainer:
     def __init__(self, env: Q_Environment, q_table_shape=(3, 3, 3, 3)):
-        self._env = env
+        self._env: Q_Environment = env
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
 
     def train(self, episodes=1, max_steps_per_episode=500, lawnmover_size=70, reward_func = reward_gas_level, policy = episilon_greedy, store_q_table_by_episode = False):

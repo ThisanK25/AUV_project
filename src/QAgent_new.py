@@ -20,8 +20,6 @@ class Q_Agent:
         
         self._alpha: float   = alpha
 
-
-
         self._epsilon: float = epsilon
         self._temperature: float = temperature
         
@@ -38,7 +36,6 @@ class Q_Agent:
         self._heading = Direction.North
         
         self._visited = set()
-
         self._actions_performed: list = []
         
     def run(self, lawnmower_size=70, max_steps = 100) -> None:
@@ -160,6 +157,9 @@ class Q_Agent:
 
     @property
     def q_table(self) -> np.ndarray:
+        if not hasattr(self, "_q_table"):
+            self._q_table = np.zeros((3, 3, 3, 3), dtype=np.int32)
+
         return self._q_table
     
     @property
