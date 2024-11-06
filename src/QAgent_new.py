@@ -158,6 +158,7 @@ class Q_Agent:
     @property
     def q_table(self) -> np.ndarray:
         if not hasattr(self, "_q_table"):
+            # Sets an empty q_table if non is set.
             self._q_table = np.zeros((3, 3, 3, 3), dtype=np.int32)
 
         return self._q_table
@@ -175,6 +176,8 @@ class Q_Agent:
         Returns the ratio of gas coordinates visited.
         input: gas_coords : A set of (x, y, z) coordinates as tuples
         """
+
+        # The current location of the AUV is never in the set, so we add it here.
         self._visited.add(self._position)
         num_visited_gas_coords = len(self._visited & gas_coords)
 

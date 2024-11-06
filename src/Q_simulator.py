@@ -83,16 +83,15 @@ class Q_Simulator:
             self._agent.q_table = q_table
 
 
-def fetch_sim_files(directory = Path(r"./sim")):
+def fetch_sim_files(directory = Path(r"./sim")) -> filter[Path]:
     return filter(Path.is_file, directory.iterdir())
 
 
 if __name__ == "__main__":
-    with tqdm(total=len(list(fetch_sim_files())) * 5, ncols=100, desc="Reading files", bar_format='{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red') as pbar:
-
+    with tqdm(total=len(list(fetch_sim_files())) * 5, ncols=100, desc="Reading files", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red') as pbar:
         for file_path in fetch_sim_files():
             for depth in range(64, 70):
-                env   = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth)
+                env   = Q_Environment(file_path, depth=depth)
                 sim = Q_Simulator(env, Q_Agent(env))
                 pbar.update(1)
 
