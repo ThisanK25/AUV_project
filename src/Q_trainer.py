@@ -15,26 +15,29 @@ class Q_trainer:
         self._env = env
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
 
-    def train(self, episodes=1, max_steps_per_episode=500, lawnmover_size=70, reward_func = reward_gas_level, policy = episilon_greedy):
+    def train(self, episodes=1, max_steps_per_episode=500, lawnmover_size=70, reward_func = reward_gas_level, policy = episilon_greedy, store_q_table_by_episode = False):
         for episode in range(episodes):
             agent = Q_Agent(self._env, reward_func=reward_func, policy=policy)
             agent.q_table = self._q_table
             agent.run(lawnmower_size=lawnmover_size, max_steps=max_steps_per_episode)
             self._q_table = agent.q_table
-            print(f"Episode {episode + 1}/{episodes} completed.")
-            print(f"Collected data: {self._env._collected_data}")
+            if store_q_table_by_episode:
+                filename = Path("./results") / "q_tables" / f"{episode}_{reward_func}_{policy}_lawn_size_{lawnmover_size}.pkl"
+                self.save_q_table(filename=filename)
+            else:
+                print(f"Episode {episode + 1}/{episodes} completed.")
             # if episode % 100 == 0:
             #     print(f"Actions performed in episode {episode}: {agent._actions_performed}")
-
-        pprint(self._q_table)
-        with open("q_table.pkl", "wb") as f:
-            pickle.dump(self._q_table, f)
+            
         self._save_position_history(agent)
+        if not store_q_table_by_episode:
+            filename = Path("./results") / "q_tables" / f"{episode}_{reward_func}_{policy}_lawn_size_{lawnmover_size}.pkl"
+            self.save_q_table(filename=filename)
 
     def _save_position_history(self, agent: Q_Agent):
         self.position_history = agent._actions_performed
     
-    def save_q_table(self, filename):
+    def save_q_table(self, filename = r"./results/q_tables/q_table.pkl"):
         with open(filename, "wb") as f:
             pickle.dump(self._q_table, f)
         print(f"Q-table saved to {filename}")
@@ -104,7 +107,7 @@ def run_experiments() -> None:
     for size in (20, 50, 80):
         for depth in range(66, 69):
             env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
-            trainer = Q_trainer(env, )
+            trainer = Q_trainer(env )
             trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area, policy=soft_max)
             for zoom in [False]:
                 figure_name = rf"./results/plots/softmax_reward_trace_area/training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}_reward_trace_area_depth_{depth}.png"

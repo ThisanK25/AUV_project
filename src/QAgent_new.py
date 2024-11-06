@@ -16,10 +16,12 @@ class Q_Agent:
                  temperature:float = 1.0,
                  reward_func = reward_gas_level,
                  policy = episilon_greedy,
-                 start_position = None) -> None:
+                 start_position: tuple[int, int, int] | None = None) -> None:
         
         self._alpha: float   = alpha
-        self._gamma: float   = gamma
+
+
+
         self._epsilon: float = epsilon
         self._temperature: float = temperature
         
@@ -32,14 +34,14 @@ class Q_Agent:
 
         # metadata
         self._env: Q_Environment = env
-        self._position: tuple[int, int, int] = start_position if start_position else env.upper_left_corner
+        self._position: tuple[int, int, int] = start_position if start_position else env.lower_left_corner
         self._heading = Direction.North
         
         self._visited = set()
 
         self._actions_performed: list = []
         
-    def run(self, lawnmower_size, max_steps = 100) -> None:
+    def run(self, lawnmower_size=70, max_steps = 100) -> None:
         self.perform_cartesian_lawnmower(lawnmower_size)
         self._move_to_max_gas_value()
         reward = 0
@@ -168,6 +170,15 @@ class Q_Agent:
     def q_table(self, table:np.ndarray) -> None:
         self._q_table: np.ndarray = table
 
+    def gas_coords_visited(self, gas_coords: set) -> float:
+        """
+        Returns the ratio of gas coordinates visited.
+        input: gas_coords : A set of (x, y, z) coordinates as tuples
+        """
+        self._visited.add(self._position)
+        num_visited_gas_coords = len(self._visited & gas_coords)
+
+        return num_visited_gas_coords / len(gas_coords)
 
 if __name__ == "__main__":
     env= Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc")) 
