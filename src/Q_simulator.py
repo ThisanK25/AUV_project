@@ -37,8 +37,7 @@ class Q_Simulator:
         coords_list = list(self._env.traverse_environment)
         total_coords = len(coords_list)
         
-        # magic formatting, thanks chatGPT
-        red_format = '\033[91m{l_bar}{bar}\033[0m [elapsed: {elapsed} remaining: {remaining}]'
+        red_format = '{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]'
 
         with tqdm(total=total_coords, ncols=100, desc='Processing Coordinates', bar_format=red_format, colour='green') as pbar:
             for idx, coords in enumerate(coords_list):
@@ -84,7 +83,7 @@ class Q_Simulator:
             self._agent.q_table = q_table
 
 if __name__ == "__main__":
-    env   = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=67)
+    env   = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=66)
     sim = Q_Simulator(env, Q_Agent(env))
     sim.test_agent()
 
