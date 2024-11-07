@@ -21,6 +21,7 @@ class Q_Simulator:
         Reads every coordinate of the gas plume and returns the plume locations as a set.
         This is a slow operation so the set is written to a pickle file located at ./sim/plume_map/<file_name>_depth_<depth>.pkl
         """
+        # ? Skulle sikkert ha lagra hele tabeller, og ikke bare gas-koordinatene. Settet kunne jeg ha lagd senere.
         if datapaht.parent != Path("sim"):
             raise ValueError(r"datapaths has to be on the form ./sim/<SMART_AUVs_*>")
         
@@ -88,8 +89,9 @@ def fetch_sim_files(directory = Path(r"./sim")) -> filter:
 
 
 if __name__ == "__main__":
-    with tqdm(total=len(list(fetch_sim_files())) * 6, ncols=100, desc="Reading files", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red') as pbar:
-        for file_path in fetch_sim_files():
+    sim_files = list(fetch_sim_files())
+    with tqdm(total=len(sim_files) * 6, ncols=100, desc="Reading files", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red') as pbar:
+        for file_path in sim_files:
             for depth in range(64, 70):
                 env   = Q_Environment(file_path, depth=depth)
                 sim = Q_Simulator(env, Q_Agent(env))
