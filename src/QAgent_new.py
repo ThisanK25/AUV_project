@@ -18,14 +18,15 @@ class Q_Agent:
                  policy = episilon_greedy,
                  start_position: tuple[int, int, int] | None = None) -> None:
         
-        self._alpha: float   = alpha
-
-        self._epsilon: float = epsilon
+        self._alpha: float       = alpha
+        self._gamma: float       = gamma
+        self._epsilon: float     = epsilon
         self._temperature: float = temperature
         
-        # I prefere this setup with the callable as an argument
+        # I prefere this setup with the callables as arguments
         self._reward_function: Callable[..., int] = reward_func
         self._policy = policy
+       
         # I dont like these.
         self._time_steps_in_high: int   = 0
         self._time_steps_in_medium: int = 0
@@ -44,8 +45,10 @@ class Q_Agent:
         reward = 0
         for step in range(max_steps):
             current_state = self._env.get_state_from_position(self._position, self._heading)
-            # Convert state to tuple of integers
+            
+            # ? This is a bit ugly, but the following functions expect state as a tuple of integers. If I had time I would refactor this.
             current_state = tuple(map(lambda x: x.value, current_state))
+
             action = self.choose_action(current_state)
             next_state = self.execute_action(action)
             reward += self._reward_function(self, next_state)
@@ -119,18 +122,18 @@ class Q_Agent:
             self._move_forward()
         
     def perform_cartesian_lawnmower(self, turn_length:int = 70, start_direction: Direction = Direction.East) -> None:
-        def move_east():
+        def move_east() -> None:
             while self._env.inbounds(self._next_position()):
                 self._move_forward()
             self._heading = Direction.South
         
-        def move_west():
+        def move_west() -> None:
             while self._env.inbounds(self._next_position()):
                 self._move_forward()
 
             self._heading = Direction.South
         
-        def move_south(turn_dir:Direction):
+        def move_south(turn_dir:Direction) -> None:
             count = 0
             while self._env.inbounds(self._next_position()) and count < turn_length:
                 self._move_forward()
@@ -152,7 +155,7 @@ class Q_Agent:
                     move_west()
                     previous_heading = Direction.West
 
-    def visited(self):
+    def visited(self) -> bool:
         return self._position in self._visited
 
     @property
@@ -179,7 +182,7 @@ class Q_Agent:
 
         # The current location of the AUV is never in the set, so we add it here.
         self._visited.add(self._position)
-        num_visited_gas_coords = len(self._visited & gas_coords)
+        num_visited_gas_coords = len(self._visited & gas_coords) 
 
         return num_visited_gas_coords / len(gas_coords)
 
