@@ -90,6 +90,7 @@ def fetch_sim_files(directory = Path(r"./sim")) -> filter:
 
 if __name__ == "__main__":
     sim_files = list(fetch_sim_files())
+    print(len(sim_files))
     with tqdm(total=len(sim_files) * 6, ncols=100, desc="Reading files", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red') as pbar:
         for file_path in sim_files:
             for depth in range(64, 70):
