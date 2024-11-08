@@ -46,7 +46,7 @@ class Q_Agent:
         for step in range(max_steps):
             current_state = self._env.get_state_from_position(self._position, self._heading)
             
-            # ? This is a bit ugly, but the following functions expect state as a tuple of integers. If I had time I would refactor this.
+            # TODO This is a bit ugly, but the following functions expect state as a tuple of integers. If I had time I would refactor this.
             current_state = tuple(map(lambda x: x.value, current_state))
 
             action = self.choose_action(current_state)
@@ -188,16 +188,3 @@ class Q_Agent:
 
 if __name__ == "__main__":
     env= Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc")) 
-
-        
-
-
-
-        
-
-
-
-
-
-
-

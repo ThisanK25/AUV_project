@@ -48,7 +48,6 @@ class Q_trainer:
         filename.parent.mkdir(exist_ok=True, parents=True)
         with open(filename, "wb") as f:
             pickle.dump(self._q_table, f)
-        print(f"\nQ-table saved to {filename}")
 
     def plot_behavior(self, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, figure_name=None):
         plt.rcParams.update({
@@ -116,7 +115,7 @@ def run_experiments() -> None:
         for depth in range(66, 67):
             env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
             trainer = Q_trainer(env)
-            trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area, policy=soft_max, store_q_table_by_episode=True)
+            trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_trace_area, policy=episilon_greedy, store_q_table_by_episode=True)
             # for zoom in [False]:
             #     figure_name = rf"./results/plots/softmax_reward_trace_area/training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}_reward_trace_area_depth_{depth}.png"
             #     trainer.plot_behavior(

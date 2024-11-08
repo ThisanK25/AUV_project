@@ -23,7 +23,7 @@ class Q_Simulator:
         Reads every coordinate of the gas plume and returns the plume locations as a set.
         This is a slow operation so the set is written to a pickle file located at ./sim/plume_map/<file_name>_depth_<depth>.pkl
         """
-        # ? Skulle sikkert ha lagra hele tabeller, og ikke bare gas-koordinatene. Settet kunne jeg ha lagd senere.
+        # ? We should have generated complete numpy grids instead and used them through out, but too late now.
         if datapaht.parent != Path("sim"):
             raise ValueError(r"datapaths has to be on the form ./sim/<SMART_AUVs_*>")
         
@@ -55,8 +55,6 @@ class Q_Simulator:
             pickle.dump(gas_coords, plume_map)
         return gas_coords
     
-
-
 
     def test_agent(self, max_steps=2000, reward_func = None, policy = None, q_table = None, start_position = None) -> float:
         """
@@ -97,11 +95,14 @@ def load_q_table(q_table_pkl_file:Path) -> np.ndarray:
     with open(q_table_pkl_file, "rb") as q_paht:
         return pickle.load(q_paht)
 
+
 def load_q_tables_sorted_by_episode(reward_func, policy_func, lawn_size) -> map:
     """
     Fetches the stored_q_tables
     """
+
     def extract_episode_number(path:Path) -> int:
+        # Key for sorting the files
         return int(path.stem.split("_")[1])
 
     reward_func_name: str = reward_func.__name__
@@ -109,6 +110,7 @@ def load_q_tables_sorted_by_episode(reward_func, policy_func, lawn_size) -> map:
     reward_func_name_length: int = len(reward_func_name.split("_"))
     directory = Path(r"./results/q_tables/q_tables_by_episodes") / policy_func_name
     if not directory.exists():
+        # I guess we could generate them here if we want to, but seems like a lot of work.
         raise FileExistsError("q_tables are not generated")
     
     q_files = []
@@ -136,12 +138,19 @@ def read_and_store_sim_files() -> None:
                 pbar.update(1)
 
 
-
-if __name__ == "__main__":
+def run_tests():
     q_tables_by_episde: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
-
+    # Here we want to test on the other file (ot both?), but I only have the one.
     env = Q_Environment(list(fetch_sim_files())[0], depth = 65)
     sim = Q_Simulator(env)
+    results = []
+
     for q_table in q_tables_by_episde:
-        print(sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.soft_max, q_table=q_table))
+        results.append(sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table))
+    # TODO
+    # plot_results()
+
+
+if __name__ == "__main__":
+    run_tests()
 
