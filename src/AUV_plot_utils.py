@@ -66,7 +66,7 @@ def plot_gas_accuracy_vs_episodes(ax, episodes_trained, gas_accuracy):
     ax.set_title('Gas Accuracy vs Episodes Trained')
     ax.grid(True)
 
-def plot_agent_behavior_specific_episode(ax, position_history, chemical_file_path, time_target, z_target, figure_name, data_parameter='pH', zoom=False):
+def plot_agent_behavior_specific_episode(ax, position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False):
     plt.rcParams.update({
         "text.usetex": False,
         "font.family": "Dejavu Serif",
@@ -103,15 +103,11 @@ def plot_agent_behavior_specific_episode(ax, position_history, chemical_file_pat
     ax.grid(True)
     ax.legend()
 
-    if figure_name:
-        plt.savefig(figure_name)
-        plt.close()
-        print(f"Saved figure: {figure_name}")
-
-def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agent_behavior:list[int], z_target:int, time_target:int=0, episodes_to_plot=[0, 25, 50]):
+def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agent_behavior:list[int], z_target:int, q_table_names, time_target:int=0, episodes_to_plot=[1, 25, 50]):
     
     episodes = [i for i in range(51)]
-
+    # Fetching figurename 
+    figure_names = [q_table_names[i] for i in [1, 25, 50]]
     fig = plt.figure(figsize=(16, 20))
     gs = GridSpec(4, 1, height_ratios=[1, 1, 1, 1.5])
 
@@ -123,12 +119,17 @@ def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agen
         if episode < len(agent_behavior):
             chemical_file_path = f"episode_{episode}_reward_trace_area_episilon_greedy_lawn_size_50"
             ax_agent_behavior = fig.add_subplot(gs[i + 1, 0])
-            figure_name = f"COMBINED_PLOT_{chemical_file_path}"
+            figure_name = figure_names[i]
             plot_agent_behavior_specific_episode(ax_agent_behavior, agent_behavior[episode], chemical_file_path, time_target, z_target, figure_name=figure_name)
         else:
             print(f"Episode {episode} not available. Maximum available episode is {len(agent_behavior) - 1}.")
 
     plt.tight_layout()
+
+    plt.savefig(figure_name)
+    plt.close()
+    print(f"Saved figure: {figure_name}")
+    
     plt.show()
 
 
