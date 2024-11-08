@@ -37,7 +37,7 @@ class Q_trainer:
                 self.save_q_table(filename=filename)
 
     def _save_position_history(self, agent: Q_Agent) -> None:
-        self.position_history = agent._actions_performed
+        self.position_history = agent.position_history
     
     def save_q_table(self, filename:Path = Path(r"./results/q_tables/q_table.pkl")) -> None:
         # Eunsure that the path exists

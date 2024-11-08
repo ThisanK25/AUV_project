@@ -8,6 +8,7 @@ from tqdm import tqdm
 from QAgent_Enums import PH_Reading
 from QAgent_new import Q_Agent
 from Q_environment import Q_Environment
+from AUV_plot_utils import plot_agent_behavior
 
 
 
@@ -17,7 +18,10 @@ class Q_Simulator:
         self._env: Q_Environment = env
         self._gas_coords: set = self._find_gas_coords(env.datapath)
 
-    
+
+
+
+
     def _find_gas_coords(self, datapaht: Path) -> set:
         """
         Reads every coordinate of the gas plume and returns the plume locations as a set.
@@ -56,7 +60,7 @@ class Q_Simulator:
         return gas_coords
     
 
-    def test_agent(self, max_steps=2000, reward_func = None, policy = None, q_table = None, start_position = None) -> float:
+    def test_agent(self, max_steps=5000, reward_func = None, policy = None, q_table = None, start_position = None) -> float:
         """
         Test the frequency of witch the agent visits gas nodes
         """
@@ -136,16 +140,16 @@ def read_and_store_sim_files() -> None:
                 sim = Q_Simulator(env, Q_Agent(env))
                 pbar.update(1)
 
-
 def run_tests():
     q_tables_by_episde: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
     # Here we want to test on the other file (ot both?), but I only have the one.
     env = Q_Environment(list(fetch_sim_files())[0], depth = 65)
     sim = Q_Simulator(env)
-    results = []
-
+    gas_accuracy = []
+    agent_behavior: list[list] = []
     for q_table in q_tables_by_episde:
-        results.append(sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table))
+        gas_accuracy.append(sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table))
+        agent_behavior.append(sim.agent.position_history)
     # TODO
     # plot_results()
 

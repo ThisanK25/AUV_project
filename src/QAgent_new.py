@@ -38,9 +38,11 @@ class Q_Agent:
         
         self._visited = set()
         self._actions_performed: list = [self._position]
+        self._lawnmover_actions: int  = 0
         
-    def run(self, lawnmower_size=70, max_steps = 100) -> None:
+    def run(self, lawnmower_size:int=70, max_steps:int = 100) -> None:
         self.perform_cartesian_lawnmower(lawnmower_size)
+        self._lawnmover_actions = len(self._actions_performed)
         self._move_to_max_gas_value()
         reward = 0
         for step in range(max_steps):
@@ -171,8 +173,26 @@ class Q_Agent:
         return self._epsilon
     
     @property
+    def lawnmover_actions(self) -> list:
+        """
+        List of the positions that was part of the lawnmover pattern
+        """
+        return self._actions_performed[:self._lawnmover_actions]
+
+    @property
     def position_history(self) -> list:
+        """
+        complete list of positions
+        """
         return self._actions_performed
+    
+    @property
+    def actions_performed(self) -> list:
+        """
+        List of the actions taken after lawnmower
+        """
+        return self._actions_performed[self._lawnmover_actions:]
+    
     
     @q_table.setter
     def q_table(self, table:np.ndarray) -> None:
@@ -187,6 +207,7 @@ class Q_Agent:
 
         # The current location of the AUV is never in the set, so we add it here.
         self._visited.add(self._position)
+        uniqe_posisitions = set(self.position_history)
         num_visited_gas_coords = len(self._visited & gas_coords) 
 
         return num_visited_gas_coords / len(gas_coords)

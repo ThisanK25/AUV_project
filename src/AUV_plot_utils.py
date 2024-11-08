@@ -50,3 +50,6 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
         print(f"Saved figure: {figure_name}")
     else:
         plt.show()
+
+def plot_gas_coords_hit_by_episode(gas_accuracy):
+    
