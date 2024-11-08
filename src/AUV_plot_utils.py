@@ -106,7 +106,5 @@ def combined_plot():
     plt.show()
 
 # Call the combined plot function to visualize the results
-combined_plot()
-
-def plot_gas_coords_hit_by_episode(gas_accuracy):
-    
+if __name__ == "__main__":
+    combined_plot()

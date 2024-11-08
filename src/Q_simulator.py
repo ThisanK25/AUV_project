@@ -152,7 +152,7 @@ def plot_results():
     for q_table_file in q_table_files:
         episode_number = int(q_table_file.stem.split('_')[1])
         q_table = load_q_table(q_table_file)
-        env = Q_environment(list(fetch_sim_files())[0], depth=65)
+        env = Q_Environment(list(fetch_sim_files())[0], depth=65)
         sim = Q_Simulator(env)
         gas_accuracy = sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table)
 
@@ -181,7 +181,7 @@ def plot_results():
         if not q_table_path.exists():
             continue
         q_table = load_q_table(q_table_path)
-        env = Q_environment(list(fetch_sim_files())[0], depth=65)
+        env = Q_Environment(list(fetch_sim_files())[0], depth=65)
         sim = Q_Simulator(env)
         sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table)
         position_history = sim.agent.position_history

@@ -51,6 +51,8 @@ class Q_Agent:
             
             # TODO This is a bit ugly, but the following functions expect state as a tuple of integers. If I had time I would refactor this.
             current_state = tuple(map(lambda x: x.value, current_state))
+            
+            # If the agent havent found a good state for 15 steps it will find the best position it has seen, and move there.
             if all((x == PH_Reading.HIGH for x in current_state)):
                 num_bad_steps += 1
                 # ?Not should these count as steps? This will pollute the action_performed list.
@@ -221,4 +223,3 @@ class Q_Agent:
 
 if __name__ == "__main__":
     env= Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"))
-    
