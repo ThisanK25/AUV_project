@@ -52,10 +52,11 @@ class Q_Agent:
             # TODO This is a bit ugly, but the following functions expect state as a tuple of integers. If I had time I would refactor this.
             current_state = tuple(map(lambda x: x.value, current_state))
             
-            # If the agent havent found a good state for 15 steps it will find the best position it has seen, and move there.
+            # ! If the agent havent found a good state for 15 steps it will find the best position it has seen, and move there. 
+            # It still will only choose actions from its immediate neighbourhood, so I dont consider this breaching the first person architecture
             if all((x == PH_Reading.HIGH for x in current_state)):
                 num_bad_steps += 1
-                # ?Not should these count as steps? This will pollute the action_performed list.
+                # ?  should these count as steps? This will pollute the action_performed list.
                 if num_bad_steps == 15:
                     self._move_to(self._env.min_unvisited_position(self._visited))
 

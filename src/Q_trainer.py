@@ -53,8 +53,8 @@ class Q_trainer:
         return []
 
 def run_experiments() -> None:
-    episodes =   50
-    max_steps_per_episode = 5000
+    episodes =   1
+    max_steps_per_episode = 2000
     reward_func = reward_trace_area
     policy_func = episilon_greedy
     for size in (50,):
@@ -72,7 +72,7 @@ def run_experiments() -> None:
                 z_target=depth,
                 data_parameter='pH',
                 figure_name=figure_name,
-                position_history=trainer.position_history
+                position_history=None
             )
 
 if __name__ == "__main__":

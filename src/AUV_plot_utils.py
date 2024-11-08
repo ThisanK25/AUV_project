@@ -45,6 +45,8 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
     plt.title('Agent Path with Chemical Environment')
     plt.grid(True)
     plt.legend()
+    figure_name = Path(figure_name)
+    figure_name.parent.mkdir(exist_ok=True, parents=True)
     if figure_name:
         plt.savefig(figure_name)
         plt.close()
