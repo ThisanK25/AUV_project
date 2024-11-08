@@ -53,27 +53,28 @@ class Q_trainer:
         return []
 
 def run_experiments() -> None:
-    episodes =   1
+    episodes =   50
     max_steps_per_episode = 2000
     reward_func = reward_trace_area
     policy_func = episilon_greedy
-    for size in (50,):
-        for depth in range(66, 67):
-            env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
-            trainer = Q_trainer(env)
-            trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_func, policy=policy_func, store_q_table_by_episode=True)
-
-            reward_func_name: str = reward_func.__name__
-            policy_func_name: str = policy_func.__name__
-            figure_name = rf"./results/plots/{policy_func_name}_{reward_func_name}/training_lawnmover_size_{size}_steps_per_episode{max_steps_per_episode}_reward_trace_area_depth_{depth}.png"
-            plot_agent_behavior(
-                chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
-                time_target=0,
-                z_target=depth,
-                data_parameter='pH',
-                figure_name=None,
-                position_history=trainer.position_history
-            )
+    for reward_func in [reward_trace_area, reward_gas_level]:
+        for policy_func in [episilon_greedy, soft_max]:
+            for depth in range(64, 70):
+                env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
+                for size in reversed((10, 20, 30, 40, 50, 60, 70, 80, 90, 100)):
+                    trainer = Q_trainer(env)
+                    trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_func, policy=policy_func, store_q_table_by_episode=True)
+                    reward_func_name: str = reward_func.__name__
+                    policy_func_name: str = policy_func.__name__
+                    figure_name = rf"./results/plots/{policy_func_name}_{reward_func_name}/training_lawnmover_size_{size}_steps_per_episode_{max_steps_per_episode}_reward_trace_area_depth_{depth}.png"
+                    plot_agent_behavior(
+                        chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
+                        time_target=0,
+                        z_target=depth,
+                        data_parameter='pH',
+                        figure_name=figure_name,
+                        position_history=trainer.position_history
+                    )
 
 if __name__ == "__main__":
     run_experiments()
