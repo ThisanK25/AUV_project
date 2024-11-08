@@ -20,6 +20,10 @@ class Q_Environment:
         self._collected_data = np.full((x_bounds[1] - x_bounds[0], y_bounds[1] - y_bounds[0]), np.inf, dtype=np.float64)
         self._depth: int = depth
         self._current_classification_limit: list[float] = self._set_classification_limit()
+        self._seen_by_agent = set()
+
+    def register_new_agent(self) -> None:
+        self._seen_by_agent = set()
 
     def _set_classification_limit(self) -> list[float]:
         ph_69 = [7.7, 7.5] 
@@ -92,6 +96,7 @@ class Q_Environment:
         if avg_value == float('inf'):
             avg_value, _ = chem_utils.extract_chemical_data_for_volume(self._chemical_dataset, metadata, data_variable="pH")
         
+        self._seen_by_agent.add(pos)
         # store the data in the table
         self._insert_data_value(avg_value, pos)
         return avg_value
@@ -130,11 +135,12 @@ class Q_Environment:
         return self._collected_data[x-self._x_size[0]][y-self._y_size[0]]
     
     def min_unvisited_position(self, visited: set) -> tuple[int, int, int]:
-        min_value = np.inf
+        min_value: float = np.inf
         min_position = None
-
+        # The agent has not seen all the indexes in collected data, so we need to check if the current agent knows about a location.
+        unexplored_coords:set = self._seen_by_agent - visited
         for index, value in np.ndenumerate(self._collected_data):
-            if value < min_value and index not in visited:
+            if value < min_value and index + (self._depth,) in unexplored_coords:
                 min_value = value
                 min_position = index
 

@@ -41,9 +41,11 @@ class Q_Agent:
         self._lawnmover_actions: int  = 0
         
     def run(self, lawnmower_size:int=70, max_steps:int = 100) -> None:
+        self._env.register_new_agent()
+
         self.perform_cartesian_lawnmower(lawnmower_size)
         self._lawnmover_actions = len(self._actions_performed)
-        self._move_to(self._env.min_pH_position)
+        self._move_to(self._env.min_unvisited_position(self._visited))
         reward = 0
         num_bad_steps = 0
         for step in range(max_steps):
