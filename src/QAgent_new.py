@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Callable
 import numpy as np
-from QAgent_Enums import Direction, AUV_ACTIONS
+from QAgent_Enums import Direction, AUV_ACTIONS, PH_Reading
 from Q_environment import Q_Environment
 from reward_funcs import reward_gas_level
 from policy_funcs import episilon_greedy
@@ -43,13 +43,19 @@ class Q_Agent:
     def run(self, lawnmower_size:int=70, max_steps:int = 100) -> None:
         self.perform_cartesian_lawnmower(lawnmower_size)
         self._lawnmover_actions = len(self._actions_performed)
-        self._move_to_max_gas_value()
+        self._move_to(self._env.min_pH_position)
         reward = 0
+        num_bad_steps = 0
         for step in range(max_steps):
             current_state = self._env.get_state_from_position(self._position, self._heading)
             
             # TODO This is a bit ugly, but the following functions expect state as a tuple of integers. If I had time I would refactor this.
             current_state = tuple(map(lambda x: x.value, current_state))
+            if all((x == PH_Reading.HIGH for x in current_state)):
+                num_bad_steps += 1
+                # ?Not should these count as steps? This will pollute the action_performed list.
+                if num_bad_steps == 15:
+                    self._move_to(self._env.min_unvisited_position(self._visited))
 
             action = self.choose_action(current_state)
             next_state = self.execute_action(action)
@@ -104,14 +110,14 @@ class Q_Agent:
         return tuple(map(lambda x: x.value, self._env.get_state_from_position(self._position, self._heading)))
 
 
-    def _move_to_max_gas_value(self) -> None:
+    def _move_to(self, gas_pos: tuple[int, int, int]) -> None:
         """
         Moves the AUV to a target location. OBS this allows 180 degree turn
         input:
           target : tuple[int, int, int] - x, y, z coords
         output: None
         """
-        x_target, y_target , _= self._env.min_pH_position
+        x_target, y_target , _= gas_pos
         x, y, _ = self._position
         x_dir = Direction.East  if x_target - x  > 0 else Direction.West
         y_dir = Direction.North if y_target - y  < 0 else Direction.South
@@ -214,4 +220,5 @@ class Q_Agent:
         return num_visited_gas_coords / len(gas_coords)
 
 if __name__ == "__main__":
-    env= Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc")) 
+    env= Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"))
+    

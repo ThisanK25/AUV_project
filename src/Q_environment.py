@@ -129,6 +129,18 @@ class Q_Environment:
         x, y, _ = pos
         return self._collected_data[x-self._x_size[0]][y-self._y_size[0]]
     
+    def min_unvisited_position(self, visited: set) -> tuple[int, int, int]:
+        min_value = np.inf
+        min_position = None
+
+        for index, value in np.ndenumerate(self._collected_data):
+            if value < min_value and index not in visited:
+                min_value = value
+                min_position = index
+
+        return min_position
+
+
     @property
     def min_pH_position(self) -> tuple[int, int, int]:
         min_pH_position = np.unravel_index(np.argmin(self._collected_data), self._collected_data.shape)
