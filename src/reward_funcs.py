@@ -35,7 +35,7 @@ def reward_trace_area(agent, next_state:tuple[PH_Reading, PH_Reading, PH_Reading
     if left == forward == right:
         if left == PH_Reading.HIGH:
             return -3
-        return 0
+        return -1
     if left != PH_Reading.HIGH and right == PH_Reading.HIGH:
         return 5
     return 1

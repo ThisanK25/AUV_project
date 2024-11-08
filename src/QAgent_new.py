@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Callable
 import numpy as np
-from QAgent_Enums import Direction, AUV_ACTIONS
+from QAgent_Enums import Direction, AUV_ACTIONS, PH_Reading
 from Q_environment import Q_Environment
 from reward_funcs import reward_gas_level
 from policy_funcs import episilon_greedy
@@ -16,37 +16,52 @@ class Q_Agent:
                  temperature:float = 1.0,
                  reward_func = reward_gas_level,
                  policy = episilon_greedy,
-                 start_position = None) -> None:
+                 start_position: tuple[int, int, int] | None = None) -> None:
         
-        self._alpha: float   = alpha
-        self._gamma: float   = gamma
-        self._epsilon: float = epsilon
+        self._alpha: float       = alpha
+        self._gamma: float       = gamma
+        self._epsilon: float     = epsilon
         self._temperature: float = temperature
         
-        # I prefere this setup with the callable as an argument
+        # I prefere this setup with the callables as arguments
         self._reward_function: Callable[..., int] = reward_func
         self._policy = policy
+       
         # I dont like these.
         self._time_steps_in_high: int   = 0
         self._time_steps_in_medium: int = 0
 
         # metadata
         self._env: Q_Environment = env
-        self._position: tuple[int, int, int] = start_position if start_position else env.upper_left_corner
+        self._position: tuple[int, int, int] = start_position if start_position else env.lower_left_corner
         self._heading = Direction.North
         
         self._visited = set()
-
-        self._actions_performed: list = []
+        self._actions_performed: list = [self._position]
+        self._lawnmover_actions: int  = 0
         
-    def run(self, lawnmower_size, max_steps = 100) -> None:
+    def run(self, lawnmower_size:int=70, max_steps:int = 100) -> None:
         self.perform_cartesian_lawnmower(lawnmower_size)
-        self._move_to_max_gas_value()
+        self._lawnmover_actions = len(self._actions_performed)
+        self._move_to(self._env.min_pH_position)
         reward = 0
+        num_bad_steps = 0
         for step in range(max_steps):
             current_state = self._env.get_state_from_position(self._position, self._heading)
-            # Convert state to tuple of integers
+            bad_state = all((x == PH_Reading.HIGH for x in current_state))
+            # TODO This is a bit ugly, but the following functions expect state as a tuple of integers. If I had time I would refactor this.
             current_state = tuple(map(lambda x: x.value, current_state))
+            
+            # ! If the agent havent found a good state for 15 steps it will find the best position it has seen, and move there. 
+            # It still will only choose actions from its immediate neighbourhood, so I dont consider this breaching the first person architecture
+            if bad_state:
+                num_bad_steps += 1
+                # ?  should these count as steps? This will pollute the action_performed list.
+                if num_bad_steps == 15:
+                    self._move_to(self._env.min_unvisited_position(self._visited))
+            else:
+                num_bad_steps = 0
+
             action = self.choose_action(current_state)
             next_state = self.execute_action(action)
             reward += self._reward_function(self, next_state)
@@ -100,14 +115,17 @@ class Q_Agent:
         return tuple(map(lambda x: x.value, self._env.get_state_from_position(self._position, self._heading)))
 
 
-    def _move_to_max_gas_value(self) -> None:
+    def _move_to(self, gas_pos: tuple[int, int, int]) -> None:
         """
         Moves the AUV to a target location. OBS this allows 180 degree turn
         input:
           target : tuple[int, int, int] - x, y, z coords
         output: None
         """
-        x_target, y_target , _= self._env.min_pH_position
+        if not len(gas_pos) == 3:
+            x_target, y_target = gas_pos
+        else:
+            x_target, y_target , _= gas_pos
         x, y, _ = self._position
         x_dir = Direction.East  if x_target - x  > 0 else Direction.West
         y_dir = Direction.North if y_target - y  < 0 else Direction.South
@@ -120,18 +138,18 @@ class Q_Agent:
             self._move_forward()
         
     def perform_cartesian_lawnmower(self, turn_length:int = 70, start_direction: Direction = Direction.East) -> None:
-        def move_east():
+        def move_east() -> None:
             while self._env.inbounds(self._next_position()):
                 self._move_forward()
             self._heading = Direction.South
         
-        def move_west():
+        def move_west() -> None:
             while self._env.inbounds(self._next_position()):
                 self._move_forward()
 
             self._heading = Direction.South
         
-        def move_south(turn_dir:Direction):
+        def move_south(turn_dir:Direction) -> None:
             count = 0
             while self._env.inbounds(self._next_position()) and count < turn_length:
                 self._move_forward()
@@ -153,34 +171,61 @@ class Q_Agent:
                     move_west()
                     previous_heading = Direction.West
 
-    def visited(self):
+    def visited(self) -> bool:
         return self._position in self._visited
 
     @property
     def q_table(self) -> np.ndarray:
+        if not hasattr(self, "_q_table"):
+            # Sets an empty q_table if non is set.
+            self._q_table = np.zeros((3, 3, 3, 3), dtype=np.int32)
+
         return self._q_table
     
     @property
     def epsilon(self) -> float:
         return self._epsilon
     
+    @property
+    def lawnmover_actions(self) -> list:
+        """
+        List of the positions that was part of the lawnmover pattern
+        """
+        return self._actions_performed[:self._lawnmover_actions]
+
+    @property
+    def position_history(self) -> list:
+        """
+        complete list of positions
+        """
+        return self._actions_performed
+    
+    @property
+    def actions_performed(self) -> list:
+        """
+        List of the actions taken after lawnmower
+        """
+        return self._actions_performed[self._lawnmover_actions:]
+    
+    
     @q_table.setter
     def q_table(self, table:np.ndarray) -> None:
         self._q_table: np.ndarray = table
 
 
+    def gas_coords_visited(self, gas_coords: set) -> float:
+        """
+        Returns the ratio of gas coordinates visited.
+        input: gas_coords : A set of (x, y, z) coordinates as tuples
+        """
+
+        # The current location of the AUV is never in the set, so we add it here.
+        self._visited.add(self._position)
+        visited_after_lawn = self._visited - set(self.lawnmover_actions)
+
+        num_visited_gas_coords = len(visited_after_lawn & gas_coords) 
+
+        return num_visited_gas_coords / len(gas_coords)
+
 if __name__ == "__main__":
-    env= Q_Environment(Path(r"../../SMART-AUVs_OF-June-1c-0002.nc")) 
-
-        
-
-
-
-        
-
-
-
-
-
-
-
+    env= Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"))

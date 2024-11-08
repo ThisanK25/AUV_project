@@ -8,7 +8,7 @@ from pathlib import Path
 
 def test_classifier(env: Q_Environment, pos: tuple[int, int, int]):
     vals = env.get_current_pH_values((94, 71, 68), Direction.North)
-    classified = env._classify_pH(vals[0])
+    classified = env.classify_pH(vals[0])
     print(classified)
 
 if __name__ == "__main__":
