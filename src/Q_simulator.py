@@ -10,7 +10,8 @@ from QAgent_new import Q_Agent
 from Q_environment import Q_Environment
 from AUV_plot_utils import plot_agent_behavior
 import matplotlib.pyplot as plt
-
+import matplotlib.animation as animation
+from matplotlib.animation import PillowWriter
 
 
 class Q_Simulator:
@@ -191,6 +192,65 @@ def plot_results():
     plt.tight_layout()
     plt.show()
 
+def animate_lawnmower_and_actions(sim, save_path="./results/agent_animation.gif"):
+    """
+    Animates the agent's lawnmower path and subsequent actions on the environment in a pointwise manner,
+    completing in 10 seconds and accounting for environment boundaries.
+    Saves the animation as a GIF.
+    """
+    fig, ax = plt.subplots()
+    ax.set_title("Lawnmower Path and Actions Performed in Environment (Pointwise)")
+    
+    # Environment bounds from Q_Environment
+    x_min, x_max = sim._env._x_size
+    y_min, y_max = sim._env._y_size
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+    ax.set_xlabel("X Coordinate")
+    ax.set_ylabel("Y Coordinate")
+    
+    # Paths
+    lawnmower_path = sim._agent.lawnmover_actions
+    actions_path = sim._agent.actions_performed
+
+    # Initialize scatter plots for each path
+    lawnmower_scatter = ax.scatter([], [], color='blue', label="Lawnmower Path")
+    actions_scatter = ax.scatter([], [], color='red', label="Actions Performed After")
+    ax.legend()
+
+    # Lists to store the points for each scatter plot
+    lawnmower_x_data, lawnmower_y_data = [], []
+    actions_x_data, actions_y_data = [], []
+
+    # Update function for animation
+    def update(frame):
+        # Plot lawnmower path points up to the current frame
+        if frame < len(lawnmower_path):
+            x, y, *_ = lawnmower_path[frame]  # Extract x, y
+            lawnmower_x_data.append(x)
+            lawnmower_y_data.append(y)
+            lawnmower_scatter.set_offsets(list(zip(lawnmower_x_data, lawnmower_y_data)))
+        else:
+            # Start plotting action points after lawnmower path is complete
+            adjusted_frame = frame - len(lawnmower_path)
+            if adjusted_frame < len(actions_path):  # Avoid exceeding length
+                x, y, *_ = actions_path[adjusted_frame]
+                actions_x_data.append(x)
+                actions_y_data.append(y)
+                actions_scatter.set_offsets(list(zip(actions_x_data, actions_y_data)))
+
+        return lawnmower_scatter, actions_scatter
+
+    # Calculate total frames and set the interval for 10 seconds duration
+    total_frames = len(lawnmower_path) + len(actions_path)
+    interval = 10000 / total_frames  # Duration in milliseconds divided by total frames
+
+    # Create the animation
+    ani = animation.FuncAnimation(fig, update, frames=total_frames, interval=interval)
+
+    # Save the animation as a GIF using PillowWriter
+    ani.save(save_path, writer=PillowWriter(fps=1000 / interval))
+    plt.show()
 
 def run_tests():
     q_tables_by_episde: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
@@ -205,6 +265,34 @@ def run_tests():
     # TODO
     plot_results()
 
-
 if __name__ == "__main__":
-    run_tests()
+    # def plot_line_pointwise(x, y):
+    #     # Create a figure and axis object
+    #     plt.ion()  # Turn on interactive mode
+    #     fig, ax = plt.subplots()
+    #     ax.set_xlim(min(x), max(x))  # Set x-axis limits
+    #     ax.set_ylim(min(y), max(y))  # Set y-axis limits
+    #     line, = ax.plot([], [], 'b-')  # Initialize an empty line (blue solid line)
+
+    #     # Plot each point one by one to form the line
+    #     for i in range(len(x)):
+    #         line.set_data(x[:i+1], y[:i+1])  # Update the data for the line
+    #         plt.draw()  # Redraw the plot
+    #         plt.pause(0.05)  # Pause to update the plot, adjust timing as needed
+        
+    #     # Turn off interactive mode and show final plot
+    #     plt.ioff()
+    #     plt.show()
+
+    # # Example usage
+    # x = np.linspace(0, 10, 100)  # 100 points between 0 and 10
+    # y = np.sin(x)  # Sine wave values for y
+
+    # plot_line_pointwise(x, y)
+
+    env = Q_Environment(f"./sim/SMART-AUVs_OF-June-1c-0002.nc")
+    agent = Q_Agent(env)
+    agent.q_table = load_q_table("./results/q_tables/q_tables_by_episodes/episilon_greedy/episode_50_reward_trace_area_episilon_greedy_lawn_size_50.pkl")
+    sim = Q_Simulator(env, agent)
+    sim.test_agent(q_table=agent.q_table)
+    animate_lawnmower_and_actions(sim)
