@@ -207,8 +207,9 @@ class Q_Agent:
 
         # The current location of the AUV is never in the set, so we add it here.
         self._visited.add(self._position)
-        uniqe_posisitions = set(self.position_history)
-        num_visited_gas_coords = len(self._visited & gas_coords) 
+        visited_after_lawn = self._visited - set(self.lawnmover_actions)
+
+        num_visited_gas_coords = len(visited_after_lawn & gas_coords) 
 
         return num_visited_gas_coords / len(gas_coords)
 
