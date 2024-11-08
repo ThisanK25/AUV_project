@@ -48,17 +48,19 @@ class Q_Agent:
         num_bad_steps = 0
         for step in range(max_steps):
             current_state = self._env.get_state_from_position(self._position, self._heading)
-            
+            bad_state = all((x == PH_Reading.HIGH for x in current_state))
             # TODO This is a bit ugly, but the following functions expect state as a tuple of integers. If I had time I would refactor this.
             current_state = tuple(map(lambda x: x.value, current_state))
             
             # ! If the agent havent found a good state for 15 steps it will find the best position it has seen, and move there. 
             # It still will only choose actions from its immediate neighbourhood, so I dont consider this breaching the first person architecture
-            if all((x == PH_Reading.HIGH for x in current_state)):
+            if bad_state:
                 num_bad_steps += 1
                 # ?  should these count as steps? This will pollute the action_performed list.
                 if num_bad_steps == 15:
                     self._move_to(self._env.min_unvisited_position(self._visited))
+            else:
+                num_bad_steps = 0
 
             action = self.choose_action(current_state)
             next_state = self.execute_action(action)
@@ -120,7 +122,10 @@ class Q_Agent:
           target : tuple[int, int, int] - x, y, z coords
         output: None
         """
-        x_target, y_target , _= gas_pos
+        if not len(gas_pos) == 3:
+            x_target, y_target = gas_pos
+        else:
+            x_target, y_target , _= gas_pos
         x, y, _ = self._position
         x_dir = Direction.East  if x_target - x  > 0 else Direction.West
         y_dir = Direction.North if y_target - y  < 0 else Direction.South

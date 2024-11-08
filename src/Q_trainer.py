@@ -71,8 +71,8 @@ def run_experiments() -> None:
                 time_target=0,
                 z_target=depth,
                 data_parameter='pH',
-                figure_name=figure_name,
-                position_history=None
+                figure_name=None,
+                position_history=trainer.position_history
             )
 
 if __name__ == "__main__":
