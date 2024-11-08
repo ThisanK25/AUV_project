@@ -60,7 +60,6 @@ class Q_Simulator:
         """
         Test the frequency of witch the agent visits gas nodes
         """
-        # We could create the agent here as well I suppose
 
         if reward_func is None:
             reward_func = reward_funcs.reward_trace_area

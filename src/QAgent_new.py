@@ -37,7 +37,7 @@ class Q_Agent:
         self._heading = Direction.North
         
         self._visited = set()
-        self._actions_performed: list = []
+        self._actions_performed: list = [self._position]
         
     def run(self, lawnmower_size=70, max_steps = 100) -> None:
         self.perform_cartesian_lawnmower(lawnmower_size)
@@ -170,9 +170,14 @@ class Q_Agent:
     def epsilon(self) -> float:
         return self._epsilon
     
+    @property
+    def position_history(self) -> list:
+        return self._actions_performed
+    
     @q_table.setter
     def q_table(self, table:np.ndarray) -> None:
         self._q_table: np.ndarray = table
+
 
     def gas_coords_visited(self, gas_coords: set) -> float:
         """
