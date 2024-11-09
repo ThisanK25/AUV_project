@@ -26,6 +26,7 @@ class Q_Simulator:
         Reads every coordinate of the gas plume and returns the plume locations as a set.
         This is a slow operation so the set is written to a pickle file located at ./sim/plume_map/<file_name>_depth_<depth>.pkl
         """
+        
         # ? We should have generated complete numpy grids instead and used them through out, but too late now.
         if datapaht.parent != Path("sim"):
             raise ValueError(r"datapaths has to be on the form ./sim/<SMART_AUVs_*>")
@@ -40,11 +41,12 @@ class Q_Simulator:
             
         gas_coords = set()        
         # Setting up a progress bar
+
         coords_list = list(self._env.traverse_environment)
         total_coords = len(coords_list)
         
         red_format = '{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]'
-
+        
         with tqdm(total=total_coords, ncols=100, desc='Processing Coordinates', bar_format=red_format, colour='green', position=1) as pbar:
             for idx, coords in enumerate(coords_list):
                 gas_val = self._env.get_pH_at_position(coords, 0)
@@ -158,16 +160,16 @@ def run_tests():
     q_table_names.sort(key=extract_episode_number)
     # Here we want to test on the other file (ot both?), but I only have the one.
     depth = 65
-    env = Q_Environment(list(fetch_sim_files())[0], depth= 65)
+    env = Q_Environment(list(fetch_sim_files())[0], depth=depth)
     sim = Q_Simulator(env)
+    print(sim._gas_coords)
     gas_accuracy = []
     agent_behavior: list[list] = []
     for q_table in q_tables_by_episode:
         gas_accuracy.append(sim.test_agent(reward_func=reward_funcs.reward_trace_area, max_steps=2, policy=policy_funcs.episilon_greedy, q_table=q_table))
         agent_behavior.append(sim.agent.position_history)
-        #run_tests_and_plot_specific_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, episodes_to_plot=[1, 25, 50], q_table_names = q_table_names)
+        run_tests_and_plot_specific_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, episodes_to_plot=[1, 25, 50], q_table_names = q_table_names)
 
 
 if __name__ == "__main__":
-    for plume_set in load_all_plume_maps():
-        print(plume_set)
+    run_tests()
