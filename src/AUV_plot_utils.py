@@ -4,6 +4,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 from xarray import DataArray
 from utils import chem_utils
 
@@ -165,15 +166,24 @@ def draw_environment(chemical_file_path, time_target, z_target, data_parameter='
     return fig, ax
 
 
-def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, gif_name=None):
+def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, gif_name=None, interval=10, head_color='red'):
     fig, ax = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
-    x_coords, y_coords = zip(*[(pos[0], pos[1]) for pos in position_history])
-    
-    if not x_coords:
-        raise ValueError("Position history did not contain the expected depth, or is empty")
+
+    x_coords, y_coords = zip(*[(pos[0], pos[1]) for pos in position_history if pos[2] == z_target])
+
     # Initial state of the agent's path
-    agent_path, = ax.plot([], [], 'ko-', markersize=5, label='Agent Path')
-    
+    agent_path, = ax.plot([], [], 'k-', markersize=5, label='Agent Path')
+    agent_head, = ax.plot([], [], 'o', markersize=8, color=head_color, label='Current Position')
+
+    # TODO We can find some AUV-sprite to put here.
+    #sprite_image = plt.imread(sprite_path)
+    #sprite_artist = None
+#
+    #if sprite_image is not None:
+    #    sprite_offset_image = OffsetImage(sprite_image, zoom=0.2)
+    #    sprite_artist = AnnotationBbox(sprite_offset_image, (x_coords[0], y_coords[0]), frameon=False)
+    #    ax.add_artist(sprite_artist)
+
     if zoom:
         x_min, x_max = min(x_coords), max(x_coords)
         y_min, y_max = min(y_coords), max(y_coords)
@@ -184,9 +194,10 @@ def animate_agent_behavior(position_history, chemical_file_path, time_target, z_
 
     def update(frame):
         agent_path.set_data(x_coords[:frame+1], y_coords[:frame+1])
-        return agent_path,
+        agent_head.set_data(x_coords[frame], y_coords[frame])
+        return agent_path, agent_head,
 
-    ani = FuncAnimation(fig, update, frames=range(len(x_coords)), blit=True)
+    ani = FuncAnimation(fig, update, frames=range(len(x_coords)), interval=interval, blit=True)
 
     ax.set_xlabel('Easting [m]')
     ax.set_ylabel('Northing [m]')
