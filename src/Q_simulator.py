@@ -158,7 +158,7 @@ def run_tests():
     q_table_names.sort(key=extract_episode_number)
     # Here we want to test on the other file (ot both?), but I only have the one.
     depth = 65
-    env = Q_Environment(list(fetch_sim_files())[0], depth)
+    env = Q_Environment(list(fetch_sim_files())[0], depth= 65)
     sim = Q_Simulator(env)
     gas_accuracy = []
     agent_behavior: list[list] = []

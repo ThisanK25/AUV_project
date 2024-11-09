@@ -219,7 +219,8 @@ class Q_Agent:
         Returns the ratio of gas coordinates visited.
         input: gas_coords : A set of (x, y, z) coordinates as tuples
         """
-
+        if len(gas_coords) < 1:
+            return 0 
         # The current location of the AUV is never in the set, so we add it here.
         self._visited.add(self._position)
         visited_after_lawn = self._visited - set(self.lawnmover_actions)
