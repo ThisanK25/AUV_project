@@ -162,7 +162,6 @@ def run_tests():
     q_tables_by_episode: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.episilon_greedy, reward_func=reward_funcs.reward_trace_area, lawn_size=lawn_size, depth = q_table_depth)
     q_table_names = extract_q_table_files(policy_func=policy_funcs.episilon_greedy, reward_func=reward_funcs.reward_trace_area, lawn_size=lawn_size, depth=q_table_depth)
     q_table_names.sort(key=extract_episode_number)
-    print(len(q_table_names))
     # Here we want to test on the other file (ot both?), but I only have the one.
     depth = 65
     env = Q_Environment(list(fetch_sim_files())[0], depth=depth)
@@ -172,7 +171,7 @@ def run_tests():
     for q_table in q_tables_by_episode:
         gas_accuracy.append(sim.test_agent(reward_func=reward_funcs.reward_trace_area, max_steps=2, policy=policy_funcs.episilon_greedy, q_table=q_table))
         agent_behavior.append(sim.agent.position_history)
-        run_tests_and_plot_specific_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, episodes_to_plot=[1, 25, 50], q_table_names = q_table_names)
+    run_tests_and_plot_specific_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, episodes_to_plot=[1, 25, 50], q_table_names = q_table_names)
 
 
 if __name__ == "__main__":
