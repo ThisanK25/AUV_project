@@ -59,7 +59,7 @@ def run_experiments() -> None:
             env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
             for reward_func in [reward_trace_area, reward_gas_level]:
                 for policy_func in [episilon_greedy, soft_max]:
-                    for size in reversed((10, 20, 30, 40, 50, 60, 70, 80, 90, 100)):
+                    for size in (10, 20, 30, 40, 50, 60, 70, 80, 90, 100):
                         trainer = Q_trainer(env)
                         trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_func, policy=policy_func, store_q_table_by_episode=True)
                         pbar.update(1)

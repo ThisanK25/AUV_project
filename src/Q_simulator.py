@@ -162,6 +162,7 @@ def run_tests():
     q_tables_by_episode: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.episilon_greedy, reward_func=reward_funcs.reward_trace_area, lawn_size=lawn_size, depth = q_table_depth)
     q_table_names = extract_q_table_files(policy_func=policy_funcs.episilon_greedy, reward_func=reward_funcs.reward_trace_area, lawn_size=lawn_size, depth=q_table_depth)
     q_table_names.sort(key=extract_episode_number)
+    print(len(q_table_names))
     # Here we want to test on the other file (ot both?), but I only have the one.
     depth = 65
     env = Q_Environment(list(fetch_sim_files())[0], depth=depth)
