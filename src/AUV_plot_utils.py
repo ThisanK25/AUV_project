@@ -169,9 +169,8 @@ def draw_environment(chemical_file_path, time_target, z_target, data_parameter='
 def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, gif_name=None, interval=10, head_color='red'):
     fig, ax = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
 
-    x_coords, y_coords = zip(*[(pos[0], pos[1]) for pos in position_history if pos[2] == z_target])
+    x_coords, y_coords = zip(*[(pos[0], pos[1]) for pos in position_history])
 
-    # Initial state of the agent's path
     agent_path, = ax.plot([], [], 'k-', markersize=5, label='Agent Path')
     agent_head, = ax.plot([], [], 'o', markersize=8, color=head_color, label='Current Position')
 
