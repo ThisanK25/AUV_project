@@ -13,7 +13,7 @@ class Q_trainer:
         self._env: Q_Environment = env
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
 
-    def train(self, episodes=50, max_steps_per_episode=500, lawnmover_size=70, reward_func = reward_gas_level, policy = episilon_greedy, store_q_table_by_episode = False) -> None:
+    def train(self, episodes=50, max_steps_per_episode=2000, lawnmover_size=70, reward_func = reward_gas_level, policy = episilon_greedy, store_q_table_by_episode = False) -> None:
         policy_name:str = policy.__name__
         reward_name:str = reward_func.__name__
 
