@@ -51,7 +51,6 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
         figure_name.parent.mkdir(exist_ok=True, parents=True)
         plt.savefig(figure_name)
         plt.close()
-        print(f"Saved figure: {figure_name}")
     else:
         plt.show()  
 
