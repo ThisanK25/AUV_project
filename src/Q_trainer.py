@@ -29,12 +29,13 @@ class Q_trainer:
                 print(f"Episode {episode + 1}/{episodes} completed.")
             # if episode % 100 == 0:
             #     print(f"Actions performed in episode {episode}: {agent._actions_performed}")
+            if pbar != None:
+                pbar.update(1)
+
         self._save_position_history(agent)
         if not store_q_table_by_episode:
             filename = Path("./results") / "q_tables" / policy_name / f"{episode}_depth_{self._env.depth}_lawn_size_{lawnmover_size}.pkl"
             self.save_q_table(filename=filename)
-        if pbar != None:
-            pbar.update(1)
 
     def _save_position_history(self, agent: Q_Agent) -> None:
         self._position_history = agent.position_history

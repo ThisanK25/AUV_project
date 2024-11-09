@@ -162,7 +162,6 @@ def run_tests():
     depth = 65
     env = Q_Environment(list(fetch_sim_files())[0], depth=depth)
     sim = Q_Simulator(env)
-    print(sim._gas_coords)
     gas_accuracy = []
     agent_behavior: list[list] = []
     for q_table in q_tables_by_episode:
