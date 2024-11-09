@@ -199,23 +199,37 @@ def animate_lawnmower_and_actions(sim, save_path="./results/agent_animation.gif"
     Saves the animation as a GIF.
     """
     fig, ax = plt.subplots()
-    ax.set_title("Lawnmower Path and Actions Performed in Environment (Pointwise)")
+    ax.set_title(f"Lawnmower Path and Plume Tracing (Turn_length=70; Depth={sim._env.depth})")
     
     # Environment bounds from Q_Environment
     x_min, x_max = sim._env._x_size
     y_min, y_max = sim._env._y_size
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
-    ax.set_xlabel("X Coordinate")
-    ax.set_ylabel("Y Coordinate")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
+
+    # Plot gas field
+    chemical_dataset = sim._env._chemical_dataset
+    val_dataset = chemical_dataset['pH'].isel(time=0, siglay=sim._env.depth)
+    val = val_dataset.values[:72710]
+    x = val_dataset['x'].values[:72710]
+    y = val_dataset['y'].values[:72710]
+    x = x - x.min()
+    y = y - y.min()
+    
+    # Plot gas levels
+    scatter = ax.scatter(x, y, c=val, cmap='coolwarm', s=2)
+    cbar = fig.colorbar(scatter, ax=ax)
+    cbar.set_label('Value')
     
     # Paths
     lawnmower_path = sim._agent.lawnmover_actions
     actions_path = sim._agent.actions_performed
 
     # Initialize scatter plots for each path
-    lawnmower_scatter = ax.scatter([], [], color='blue', label="Lawnmower Path")
-    actions_scatter = ax.scatter([], [], color='red', label="Actions Performed After")
+    lawnmower_scatter = ax.scatter([], [], color='black', label="Lawnmower Path")
+    actions_scatter = ax.scatter([], [], color='white', label="Actions Performed After")
     ax.legend()
 
     # Lists to store the points for each scatter plot
@@ -268,33 +282,9 @@ def run_tests():
         #run_tests_and_plot_specific_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, episodes_to_plot=[1, 25, 50], q_table_names = q_table_names)
 
 if __name__ == "__main__":
-    # def plot_line_pointwise(x, y):
-    #     # Create a figure and axis object
-    #     plt.ion()  # Turn on interactive mode
-    #     fig, ax = plt.subplots()
-    #     ax.set_xlim(min(x), max(x))  # Set x-axis limits
-    #     ax.set_ylim(min(y), max(y))  # Set y-axis limits
-    #     line, = ax.plot([], [], 'b-')  # Initialize an empty line (blue solid line)
-
-    #     # Plot each point one by one to form the line
-    #     for i in range(len(x)):
-    #         line.set_data(x[:i+1], y[:i+1])  # Update the data for the line
-    #         plt.draw()  # Redraw the plot
-    #         plt.pause(0.05)  # Pause to update the plot, adjust timing as needed
-        
-    #     # Turn off interactive mode and show final plot
-    #     plt.ioff()
-    #     plt.show()
-
-    # # Example usage
-    # x = np.linspace(0, 10, 100)  # 100 points between 0 and 10
-    # y = np.sin(x)  # Sine wave values for y
-
-    # plot_line_pointwise(x, y)
-
     env = Q_Environment(f"./sim/SMART-AUVs_OF-June-1c-0002.nc")
     agent = Q_Agent(env)
-    agent.q_table = load_q_table("./results/q_tables/q_tables_by_episodes/episilon_greedy/episode_50_reward_trace_area_episilon_greedy_lawn_size_50.pkl")
+    agent.q_table = load_q_table("./results/q_tables/q_tables_by_episodes/episilon_greedy/episode_49_reward_trace_area_episilon_greedy_lawn_size_50.pkl")
     sim = Q_Simulator(env, agent)
     sim.test_agent(q_table=agent.q_table)
     animate_lawnmower_and_actions(sim)
