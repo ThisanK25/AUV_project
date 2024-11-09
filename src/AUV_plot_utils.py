@@ -166,22 +166,23 @@ def draw_environment(chemical_file_path, time_target, z_target, data_parameter='
     return fig, ax
 
 
-def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, gif_name=None, interval=10, head_color='red'):
+def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, gif_name=None, interval=100, sprite_path=None):
     fig, ax = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
 
+    # Extract x and y coordinates where z equals z_target
     x_coords, y_coords = zip(*[(pos[0], pos[1]) for pos in position_history])
 
+    # Initial state of the agent's path
     agent_path, = ax.plot([], [], 'k-', markersize=5, label='Agent Path')
-    agent_head, = ax.plot([], [], 'o', markersize=8, color=head_color, label='Current Position')
+    
+    # Load sprite image
+    sprite_image = plt.imread(sprite_path) if sprite_path else None
+    sprite_artist = None
 
-    # TODO We can find some AUV-sprite to put here.
-    #sprite_image = plt.imread(sprite_path)
-    #sprite_artist = None
-#
-    #if sprite_image is not None:
-    #    sprite_offset_image = OffsetImage(sprite_image, zoom=0.2)
-    #    sprite_artist = AnnotationBbox(sprite_offset_image, (x_coords[0], y_coords[0]), frameon=False)
-    #    ax.add_artist(sprite_artist)
+    if sprite_image is not None:
+        sprite_offset_image = OffsetImage(sprite_image, zoom=0.2)
+        sprite_artist = AnnotationBbox(sprite_offset_image, (x_coords[0], y_coords[0]), frameon=False)
+        ax.add_artist(sprite_artist)
 
     if zoom:
         x_min, x_max = min(x_coords), max(x_coords)
@@ -193,8 +194,9 @@ def animate_agent_behavior(position_history, chemical_file_path, time_target, z_
 
     def update(frame):
         agent_path.set_data(x_coords[:frame+1], y_coords[:frame+1])
-        agent_head.set_data(x_coords[frame], y_coords[frame])
-        return agent_path, agent_head,
+        if sprite_artist is not None:
+            sprite_artist.xy = (x_coords[frame], y_coords[frame])
+        return [agent_path, sprite_artist] if sprite_artist is not None else [agent_path]
 
     ani = FuncAnimation(fig, update, frames=range(len(x_coords)), interval=interval, blit=True)
 
