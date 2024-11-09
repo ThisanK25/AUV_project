@@ -1,7 +1,6 @@
 from pathlib import Path
 import pickle
 from typing import Callable
-
 import numpy as np
 import reward_funcs
 import policy_funcs
@@ -158,8 +157,10 @@ def read_and_store_sim_files() -> None:
                 pbar.update(1)
 
 def run_tests():
-    q_tables_by_episode: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
-    q_table_names = extract_q_table_files(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
+    lawn_size = 100
+    q_table_depth = 64
+    q_tables_by_episode: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.episilon_greedy, reward_func=reward_funcs.reward_trace_area, lawn_size=lawn_size, depth = q_table_depth)
+    q_table_names = extract_q_table_files(policy_func=policy_funcs.episilon_greedy, reward_func=reward_funcs.reward_trace_area, lawn_size=lawn_size, depth=q_table_depth)
     q_table_names.sort(key=extract_episode_number)
     # Here we want to test on the other file (ot both?), but I only have the one.
     depth = 65
