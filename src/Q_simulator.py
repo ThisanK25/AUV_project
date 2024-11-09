@@ -88,7 +88,18 @@ class Q_Simulator:
     @property
     def agent(self) -> Q_Agent:
         return self._agent
+    
 
+def load_plume_map(plume_map_path:Path) -> set:
+    if not plume_map_path.exists():
+        raise ValueError(f"invalid path: {plume_map_path}")
+    with open(plume_map_path, "rb") as plume_map:
+        return pickle.load(plume_map)
+
+def load_all_plume_maps():
+    for file in Path(r"./sim/plume_map").iterdir():
+        if file.is_file():
+            yield load_plume_map(file)
 
 def load_q_table(q_table_pkl_file:Path) -> np.ndarray:
     """
@@ -158,4 +169,5 @@ def run_tests():
 
 
 if __name__ == "__main__":
-    run_tests()
+    for plume_set in load_all_plume_maps():
+        print(plume_set)
