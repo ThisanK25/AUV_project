@@ -1,5 +1,6 @@
 from pathlib import Path
 import pickle
+from typing import Callable
 
 import numpy as np
 import reward_funcs
@@ -110,7 +111,7 @@ def load_q_table(q_table_pkl_file:Path) -> np.ndarray:
     with open(q_table_pkl_file, "rb") as q_paht:
         return pickle.load(q_paht)
     
-def extract_q_table_files(reward_func, policy_func, lawn_size):
+def extract_q_table_files(reward_func: Callable, policy_func: Callable, lawn_size:int, depth = 67):
     reward_func_name: str = reward_func.__name__
     policy_func_name: str = policy_func.__name__
     reward_func_name_length: int = len(reward_func_name.split("_"))
@@ -124,21 +125,23 @@ def extract_q_table_files(reward_func, policy_func, lawn_size):
     # Find all correct q_tables
     for file in filter(Path.is_file, directory.iterdir()):
         split_file: list[str] = file.stem.split("_")
+        
         # Extract the reward function name to get the correct q-tables
         reward_name = "_".join(split_file[2:2+reward_func_name_length])
-        if int(split_file[-1]) == lawn_size and reward_name == reward_func_name:
-            q_files.append(file) 
+        if int(split_file[-1]) == lawn_size and reward_name == reward_func_name :
+            if depth == int(split_file[-4]):
+                q_files.append(file) 
     return q_files
 
 def extract_episode_number(path:Path) -> int:
         # Key for sorting the files
         return int(path.stem.split("_")[1])
 
-def load_q_tables_sorted_by_episode(reward_func, policy_func, lawn_size) -> map:
+def load_q_tables_sorted_by_episode(reward_func, policy_func, lawn_size, depth) -> map:
     """
     Fetches the stored_q_tables
     """
-    q_files= extract_q_table_files(reward_func, policy_func, lawn_size)
+    q_files= extract_q_table_files(reward_func, policy_func, lawn_size, depth)
     q_files.sort(key=extract_episode_number)
     return map(load_q_table, q_files)
 

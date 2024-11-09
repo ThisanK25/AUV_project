@@ -51,6 +51,7 @@ class Q_trainer:
 def run_experiments() -> None:
     episodes =   50
     max_steps_per_episode = 2000
+    # 10 lawn sizes, 2 depths, 2 reward functions, 2 policy functions.
     total_training_runs = 10 * 2 * 2 * 2
     with tqdm(total=total_training_runs, ncols=100, desc=f'Training runs completed', bar_format='{l_bar}{bar} \033[94m [elapsed: {elapsed} remaining: {remaining}]'
                 , colour='green', position=0) as pbar:
