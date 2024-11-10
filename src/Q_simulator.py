@@ -11,8 +11,6 @@ from Q_environment import Q_Environment
 from AUV_plot_utils import *
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-import matplotlib.animation as animation
-from matplotlib.animation import PillowWriter
 
 
 class Q_Simulator:
@@ -205,87 +203,13 @@ def plot_results():
     plt.tight_layout()
     plt.show()
 
-def animate_lawnmower_and_actions(sim, save_path="./results/agent_animation.gif"):
-    """
-    Animates the agent's lawnmower path and subsequent actions on the environment in a pointwise manner,
-    completing in 10 seconds and accounting for environment boundaries.
-    Saves the animation as a GIF.
-    """
-    fig, ax = plt.subplots()
-    ax.set_title(f"Lawnmower Path and Plume Tracing (Turn_length=70; Depth={sim._env.depth})")
-    
-    # Environment bounds from Q_Environment
-    x_min, x_max = sim._env._x_size
-    y_min, y_max = sim._env._y_size
-    ax.set_xlim(x_min, x_max)
-    ax.set_ylim(y_min, y_max)
-    ax.set_xlabel("x [m]")
-    ax.set_ylabel("y [m]")
-
-    # Plot gas field
-    chemical_dataset = sim._env._chemical_dataset
-    val_dataset = chemical_dataset['pH'].isel(time=0, siglay=sim._env.depth)
-    val = val_dataset.values[:72710]
-    x = val_dataset['x'].values[:72710]
-    y = val_dataset['y'].values[:72710]
-    x = x - x.min()
-    y = y - y.min()
-    
-    # Plot gas levels
-    scatter = ax.scatter(x, y, c=val, cmap='coolwarm', s=2)
-    cbar = fig.colorbar(scatter, ax=ax)
-    cbar.set_label('Value')
-    
-    # Paths
-    lawnmower_path = sim._agent.lawnmover_actions
-    actions_path = sim._agent.actions_performed
-
-    # Initialize scatter plots for each path
-    lawnmower_scatter = ax.scatter([], [], color='black', label="Lawnmower Path")
-    actions_scatter = ax.scatter([], [], color='white', label="Actions Performed After")
-    ax.legend()
-
-    # Lists to store the points for each scatter plot
-    lawnmower_x_data, lawnmower_y_data = [], []
-    actions_x_data, actions_y_data = [], []
-
-    # Update function for animation
-    def update(frame):
-        # Plot lawnmower path points up to the current frame
-        if frame < len(lawnmower_path):
-            x, y, *_ = lawnmower_path[frame]  # Extract x, y
-            lawnmower_x_data.append(x)
-            lawnmower_y_data.append(y)
-            lawnmower_scatter.set_offsets(list(zip(lawnmower_x_data, lawnmower_y_data)))
-        else:
-            # Start plotting action points after lawnmower path is complete
-            adjusted_frame = frame - len(lawnmower_path)
-            if adjusted_frame < len(actions_path):  # Avoid exceeding length
-                x, y, *_ = actions_path[adjusted_frame]
-                actions_x_data.append(x)
-                actions_y_data.append(y)
-                actions_scatter.set_offsets(list(zip(actions_x_data, actions_y_data)))
-
-        return lawnmower_scatter, actions_scatter
-
-    # Calculate total frames and set the interval for 10 seconds duration
-    total_frames = len(lawnmower_path) + len(actions_path)
-    interval = 10000 / total_frames  # Duration in milliseconds divided by total frames
-
-    # Create the animation
-    ani = animation.FuncAnimation(fig, update, frames=total_frames, interval=interval)
-
-    # Save the animation as a GIF using PillowWriter
-    ani.save(save_path, writer=PillowWriter(fps=1000 / interval))
-    plt.show()
-
 def run_tests():
     q_tables_by_episode: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
     q_table_names = extract_q_table_files(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
     q_table_names.sort(key=extract_episode_number)
     # Here we want to test on the other file (ot both?), but I only have the one.
     depth = 65
-    env = Q_Environment(list(fetch_sim_files())[0], depth=depth)
+    env = Q_Environment(list(fetch_sim_files())[0], depth)
     sim = Q_Simulator(env)
     print(sim._gas_coords)
     gas_accuracy = []
@@ -293,14 +217,7 @@ def run_tests():
     for q_table in q_tables_by_episode:
         gas_accuracy.append(sim.test_agent(reward_func=reward_funcs.reward_trace_area, max_steps=2, policy=policy_funcs.episilon_greedy, q_table=q_table))
         agent_behavior.append(sim.agent.position_history)
-        run_tests_and_plot_specific_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, episodes_to_plot=[1, 25, 50], q_table_names = q_table_names)
+        #run_tests_and_plot_specific_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, episodes_to_plot=[1, 25, 50], q_table_names = q_table_names)
 
 if __name__ == "__main__":
-    env = Q_Environment(f"./sim/SMART-AUVs_OF-June-1c-0002.nc")
-    agent = Q_Agent(env)
-    agent.q_table = load_q_table("./results/q_tables/q_tables_by_episodes/episilon_greedy/episode_49_reward_trace_area_episilon_greedy_lawn_size_50.pkl")
-    sim = Q_Simulator(env, agent)
-    sim.test_agent(q_table=agent.q_table)
-    animate_lawnmower_and_actions(sim)
-
     run_tests()

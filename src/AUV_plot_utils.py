@@ -3,7 +3,13 @@ from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 from xarray import DataArray
 from utils import chem_utils
-
+import matplotlib.animation as animation
+from matplotlib.animation import PillowWriter
+from Q_environment import Q_Environment
+from QAgent_new import Q_Agent
+import reward_funcs
+import policy_funcs
+import Q_trainer
 
 def plot_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, figure_name=None) -> None:
     plt.rcParams.update({
@@ -131,8 +137,86 @@ def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agen
     
     plt.show()
 
+def animate_lawnmower_and_actions(env, agent, save_path="./results/agent_animation.gif"):
+    """
+    Animates the agent's lawnmower path and subsequent actions on the environment in a pointwise manner,
+    completing in 10 seconds and accounting for environment boundaries.
+    Saves the animation as a GIF.
+    """
+    fig, ax = plt.subplots()
+    ax.set_title(f"Lawnmower Path and Further Exploration (Turn length=50; Depth={env.depth})")
+    
+    # Environment bounds from Q_Environment
+    x_min, x_max = env._x_size
+    y_min, y_max = env._y_size
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
+
+    # Plot gas field
+    chemical_dataset = env._chemical_dataset
+    val_dataset = chemical_dataset['pH'].isel(time=0, siglay=env.depth)
+    val = val_dataset.values[:72710]
+    x = val_dataset['x'].values[:72710]
+    y = val_dataset['y'].values[:72710]
+    x = x - x.min()
+    y = y - y.min()
+    
+    # Plot gas levels
+    scatter = ax.scatter(x, y, c=val, cmap='coolwarm', s=2)
+    cbar = fig.colorbar(scatter, ax=ax)
+    cbar.set_label('Value')
+    
+    # Paths
+    lawnmower_path = agent.lawnmover_actions
+    actions_path = agent.actions_performed
+
+    # Initialize scatter plots for each path
+    lawnmower_scatter = ax.scatter([], [], color='black', label="Lawnmower Path")
+    actions_scatter = ax.scatter([], [], color='white', label="Actions Performed After")
+    ax.legend()
+
+    # Lists to store the points for each scatter plot
+    lawnmower_x_data, lawnmower_y_data = [], []
+    actions_x_data, actions_y_data = [], []
+
+    # Update function for animation
+    def update(frame):
+        # Plot lawnmower path points up to the current frame
+        if frame < len(lawnmower_path):
+            x, y, *_ = lawnmower_path[frame]  # Extract x, y
+            lawnmower_x_data.append(x)
+            lawnmower_y_data.append(y)
+            lawnmower_scatter.set_offsets(list(zip(lawnmower_x_data, lawnmower_y_data)))
+        else:
+            # Start plotting action points after lawnmower path is complete
+            adjusted_frame = frame - len(lawnmower_path)
+            if adjusted_frame < len(actions_path):  # Avoid exceeding length
+                x, y, *_ = actions_path[adjusted_frame]
+                actions_x_data.append(x)
+                actions_y_data.append(y)
+                actions_scatter.set_offsets(list(zip(actions_x_data, actions_y_data)))
+
+        return lawnmower_scatter, actions_scatter
+
+    # Calculate total frames and set the interval for 10 seconds duration
+    total_frames = len(lawnmower_path) + len(actions_path)
+    interval = 10000 / total_frames  # Duration in milliseconds divided by total frames
+
+    # Create the animation
+    ani = animation.FuncAnimation(fig, update, frames=total_frames, interval=interval)
+
+    # Save the animation as a GIF using PillowWriter
+    ani.save(save_path, writer=PillowWriter(fps=5000 / interval))
+    plt.show()
 
 
 # Call the combined plot function to visualize the results
 if __name__ == "__main__":
-    pass
+    env = Q_Environment("./sim/SMART-AUVs_OF-June-1c-0002.nc")
+    agent = Q_Agent(env)
+    trainer = Q_trainer.Q_trainer(env)
+    trainer.train(lawnmover_size=50)
+    agent.run(lawnmower_size=50, max_steps=2000)
+    animate_lawnmower_and_actions(env, agent)
