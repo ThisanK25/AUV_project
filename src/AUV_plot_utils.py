@@ -204,10 +204,10 @@ if __name__ == "__main__":
     env = Q_Environment(r"sim\SMART-AUVs_OF-June-1c-0002.nc", depth=66)
     agent = Q_Agent(env, policy=episilon_greedy)
     agent.q_table = load_q_table(r"results\q_tables\q_tables_by_episodes\episilon_greedy\episode_49_reward_trace_area_depth_67_lawn_size_50.pkl")
-    agent.run(max_steps=500)
-    lawnmover_name= Path(r'.\results\gifs\lawnmover.gif')
+    agent.run(max_steps=5000)
+    lawnmover_name = Path(r'.\results\gifs\lawnmover.gif')
     action_name = Path(r'.\results\gifs\actions.gif')
     sprite_path = None
     print("starting animating")
-    animate_agent_behavior(agent.lawnmover_actions, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=lawnmover_name, sprite_path=sprite_path)
+    # animate_agent_behavior(agent.lawnmover_actions, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=lawnmover_name, sprite_path=sprite_path)
     animate_agent_behavior(agent.actions_performed, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=action_name, sprite_path=sprite_path)
