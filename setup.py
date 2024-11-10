@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='AUV_Project',
-    version='0.1.0',
+    version='3.1.0',
     description='in5490 project 4',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -11,7 +11,7 @@ setup(
     url='https://github.com/ThisanK25/AUV_project', 
     packages=find_packages(),
     install_requires=[
-        'numpy', 'xarray[complete]', 'scipy', 'matplotlib', 'pandas', 'packaging', 'tqdm'
+        'numpy', 'xarray[complete]', 'scipy', 'matplotlib', 'pandas', 'packaging', 'tqdm', 'pillow'
     ],
     classifiers=[
         'Programming Language :: Python :: 3',

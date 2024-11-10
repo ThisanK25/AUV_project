@@ -5,3 +5,4 @@ scipy
 packaging
 pandas
 tqmd
+pillow
