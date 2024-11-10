@@ -127,13 +127,6 @@ def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agen
     
     plt.show()
 
-def create_auv_sprite(sprite_path):
-    plt.figure(figsize=(1,1))
-    plt.text(0.5, 0.5, 'AUV', fontsize=12, ha='center')
-    plt.axis('off')
-    plt.savefig(sprite_path, bbox_inches='tight')
-    plt.close()
-
 def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', gif_name=None, interval=100, sprite_path=None) -> None:
     """
     Animates the agens behaviour. 
@@ -212,8 +205,9 @@ if __name__ == "__main__":
     agent = Q_Agent(env, policy=episilon_greedy)
     agent.q_table = load_q_table(r"results\q_tables\q_tables_by_episodes\episilon_greedy\episode_49_reward_trace_area_depth_67_lawn_size_50.pkl")
     agent.run(max_steps=500)
-    lawnmover_name= Path(r'.\results\gifs\lawnmover')
+    lawnmover_name= Path(r'.\results\gifs\lawnmover.gif')
+    action_name = Path(r'.\results\gifs\actions.gif')
     sprite_path = None
     print("starting animating")
     animate_agent_behavior(agent.lawnmover_actions, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=lawnmover_name, sprite_path=sprite_path)
-
+    animate_agent_behavior(agent.actions_performed, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=action_name, sprite_path=sprite_path)
