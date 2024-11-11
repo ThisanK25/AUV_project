@@ -8,7 +8,7 @@ setup(
     long_description_content_type='text/markdown',
     author='Jonas E. Wenberg, Sigmund, Thisan',
     author_email='jonaen@üio.no',
-    url='https://github.com/ThisanK25/AUV_project',  # or the URL of your project
+    url='https://github.com/ThisanK25/AUV_project',
     packages=find_packages(),
     install_requires=[
         'numpy', 'xarray', 'scipy', 'matplotlib'
@@ -18,5 +18,5 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
-    python_requires='>=3.12',  # Specify the Python versions you support
+    python_requires='>=3.12'
 )
