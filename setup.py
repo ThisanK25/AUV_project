@@ -11,7 +11,7 @@ setup(
     url='https://github.com/ThisanK25/AUV_project', 
     packages=find_packages(),
     install_requires=[
-        'numpy', 'xarray[complete]', 'scipy', 'matplotlib', 'pandas', 'packaging', 'tqdm'
+        'numpy', 'xarray[complete]', 'scipy', 'matplotlib', 'pandas', 'packaging', 'tqdm', 'pillow'
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
