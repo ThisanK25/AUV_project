@@ -8,15 +8,15 @@ setup(
     long_description_content_type='text/markdown',
     author='Jonas E. Wenberg, Sigmund, Thisan',
     author_email='jonaen@üio.no',
-    url='https://github.com/ThisanK25/AUV_project',
+    url='https://github.com/ThisanK25/AUV_project', 
     packages=find_packages(),
     install_requires=[
-        'numpy', 'xarray', 'scipy', 'matplotlib'
+        'numpy', 'xarray[complete]', 'scipy', 'matplotlib', 'pandas', 'packaging', 'tqdm'
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
-    python_requires='>=3.12'
+    python_requires='>=3.12',  # Specify the Python versions you support
 )
