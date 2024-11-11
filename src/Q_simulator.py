@@ -1,17 +1,16 @@
 from pathlib import Path
 import pickle
-from typing import Callable
+
 import numpy as np
 import reward_funcs
 import policy_funcs
 from tqdm import tqdm
 from QAgent_Enums import PH_Reading
-from QAgent_new import Q_Agent
+from Q_Agent import Q_Agent
 from Q_environment import Q_Environment
 from AUV_plot_utils import *
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-
 
 
 class Q_Simulator:
@@ -110,7 +109,7 @@ def load_q_table(q_table_pkl_file:Path) -> np.ndarray:
     with open(q_table_pkl_file, "rb") as q_paht:
         return pickle.load(q_paht)
     
-def extract_q_table_files(reward_func: Callable, policy_func: Callable, lawn_size:int, depth = 67):
+def extract_q_table_files(reward_func, policy_func, lawn_size):
     reward_func_name: str = reward_func.__name__
     policy_func_name: str = policy_func.__name__
     reward_func_name_length: int = len(reward_func_name.split("_"))
@@ -124,23 +123,21 @@ def extract_q_table_files(reward_func: Callable, policy_func: Callable, lawn_siz
     # Find all correct q_tables
     for file in filter(Path.is_file, directory.iterdir()):
         split_file: list[str] = file.stem.split("_")
-        
         # Extract the reward function name to get the correct q-tables
         reward_name = "_".join(split_file[2:2+reward_func_name_length])
-        if int(split_file[-1]) == lawn_size and reward_name == reward_func_name :
-            if depth == int(split_file[-4]):
-                q_files.append(file) 
+        if int(split_file[-1]) == lawn_size and reward_name == reward_func_name:
+            q_files.append(file) 
     return q_files
 
 def extract_episode_number(path:Path) -> int:
         # Key for sorting the files
         return int(path.stem.split("_")[1])
 
-def load_q_tables_sorted_by_episode(reward_func, policy_func, lawn_size, depth) -> map:
+def load_q_tables_sorted_by_episode(reward_func, policy_func, lawn_size) -> map:
     """
     Fetches the stored_q_tables
     """
-    q_files= extract_q_table_files(reward_func, policy_func, lawn_size, depth)
+    q_files= extract_q_table_files(reward_func, policy_func, lawn_size)
     q_files.sort(key=extract_episode_number)
     return map(load_q_table, q_files)
 
@@ -156,24 +153,71 @@ def read_and_store_sim_files() -> None:
                 sim = Q_Simulator(env, Q_Agent(env))
                 pbar.update(1)
 
+def plot_results():
+    q_tables_dir = Path('results/q_tables')
+    q_table_files = [f for f in q_tables_dir.iterdir() if f.is_file() and f.name.startswith('episode')]
+    
+    # Initialize lists to store episodes and gas accuracies
+    episodes = []
+    gas_accuracies = []
+
+    for q_table_file in q_table_files:
+        episode_number = int(q_table_file.stem.split('_')[1])
+        q_table = load_q_table(q_table_file)
+        env = Q_Environment(list(fetch_sim_files())[0], depth=65)
+        sim = Q_Simulator(env)
+        gas_accuracy = sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table)
+
+        episodes.append(episode_number)
+        gas_accuracies.append(gas_accuracy)
+
+    # Sort episodes and gas accuracies
+    sorted_indices = sorted(range(len(episodes)), key=lambda k: episodes[k])
+    episodes_sorted = [episodes[i] for i in sorted_indices]
+    gas_accuracies_sorted = [gas_accuracies[i] for i in sorted_indices]
+
+    # Create the plot
+    fig, axs = plt.subplots(2, 1, figsize=(12, 16))
+
+    # Top Plot: Gas Accuracy vs Episodes
+    axs[0].plot(episodes_sorted, gas_accuracies_sorted, marker='o', linestyle='-', color='b')
+    axs[0].set_xlabel('Episode')
+    axs[0].set_ylabel('Gas Accuracy')
+    axs[0].set_title('Gas Accuracy vs. Episodes')
+
+    # Bottom Plot: Agent Behavior for Specific Episodes
+    specific_episodes = [1, 25, 50]
+    for idx, specific_episode in enumerate(specific_episodes):
+        q_table_filename = f'episode_{specific_episode}_reward_trace_area_episilon_greedy_lawn_size_50'
+        q_table_path = q_tables_dir / q_table_filename
+        if not q_table_path.exists():
+            continue
+        q_table = load_q_table(q_table_path)
+        env = Q_Environment(list(fetch_sim_files())[0], depth=65)
+        sim = Q_Simulator(env)
+        sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table)
+        position_history = sim.agent.position_history
+        axs[1].subplot(3, 1, idx + 1)
+        plot_agent_behavior(position_history, 'path_to_chemical_dataset_file', time_target=0, z_target=0, zoom=True)
+
+    plt.tight_layout()
+    plt.show()
+
 def run_tests():
-    lawn_size = 100
-    q_table_depth = 64
-    q_tables_by_episode: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.episilon_greedy, reward_func=reward_funcs.reward_trace_area, lawn_size=lawn_size, depth = q_table_depth)
-    q_table_names = extract_q_table_files(policy_func=policy_funcs.episilon_greedy, reward_func=reward_funcs.reward_trace_area, lawn_size=lawn_size, depth=q_table_depth)
+    q_tables_by_episode: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
+    q_table_names = extract_q_table_files(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
     q_table_names.sort(key=extract_episode_number)
     # Here we want to test on the other file (ot both?), but I only have the one.
     depth = 65
-    env = Q_Environment(list(fetch_sim_files())[0], depth=depth)
+    env = Q_Environment(list(fetch_sim_files())[0], depth)
     sim = Q_Simulator(env)
+    print(sim._gas_coords)
     gas_accuracy = []
     agent_behavior: list[list] = []
-
     for q_table in q_tables_by_episode:
         gas_accuracy.append(sim.test_agent(reward_func=reward_funcs.reward_trace_area, max_steps=2, policy=policy_funcs.episilon_greedy, q_table=q_table))
         agent_behavior.append(sim.agent.position_history)
-    run_tests_and_plot_3_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, q_table_names = q_table_names)
-
+        #run_tests_and_plot_specific_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, episodes_to_plot=[1, 25, 50], q_table_names = q_table_names)
 
 if __name__ == "__main__":
     run_tests()

@@ -1,5 +1,5 @@
 from pathlib import Path
-from QAgent_new import Q_Agent
+from Q_Agent import Q_Agent
 from Q_environment import Q_Environment
 import numpy as np
 import pickle
@@ -27,7 +27,8 @@ class Q_trainer:
                 self.save_q_table(filename=filename)
             else:
                 print(f"Episode {episode + 1}/{episodes} completed.")
-
+            # if episode % 100 == 0:
+            #     print(f"Actions performed in episode {episode}: {agent._actions_performed}")
         self._save_position_history(agent)
         if not store_q_table_by_episode:
             filename = Path("./results") / "q_tables" / policy_name / f"{episode}_depth_{self._env.depth}_lawn_size_{lawnmover_size}.pkl"
@@ -51,17 +52,27 @@ class Q_trainer:
 def run_experiments() -> None:
     episodes =   50
     max_steps_per_episode = 2000
-    # 10 lawn sizes, 2 depths, 2 reward functions, 2 policy functions.
-    total_training_runs = 10 * 2 * 2 * 2
+    total_training_runs = 10 * 6 * 2 * 2 
     with tqdm(total=total_training_runs, ncols=100, desc=f'Training runs completed', bar_format='{l_bar}{bar} \033[94m [elapsed: {elapsed} remaining: {remaining}]'
                 , colour='green', position=0) as pbar:
-        for depth in (64, 67):
-            env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
-            for reward_func in [reward_trace_area, reward_gas_level]:
-                for policy_func in [episilon_greedy, soft_max]:
-                    for size in (10, 20, 30, 40, 50, 60, 70, 80, 90, 100):
+        for reward_func in [reward_trace_area, reward_gas_level]:
+            for policy_func in [episilon_greedy, soft_max]:
+                for depth in range(64, 70):
+                    env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
+                    for size in reversed((10, 20, 30, 40, 50, 60, 70, 80, 90, 100)):
                         trainer = Q_trainer(env)
                         trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_func, policy=policy_func, store_q_table_by_episode=True)
+                        #reward_func_name: str = reward_func.__name__
+                        #policy_func_name: str = policy_func.__name__
+                        #figure_name = rf"./results/plots/{policy_func_name}_{reward_func_name}/training_lawnmover_size_{size}_steps_per_episode_{max_steps_per_episode}_reward_trace_area_depth_{depth}.png"
+                        #plot_agent_behavior(
+                        #    chemical_file_path=r"./sim/SMART-AUVs_OF-June-1c-0002.nc",
+                        #    time_target=0,
+                        #    z_target=depth,
+                        #    data_parameter='pH',
+                        #    figure_name=figure_name,
+                        #    position_history=trainer.position_history
+                        #)
                         pbar.update(1)
 
 if __name__ == "__main__":

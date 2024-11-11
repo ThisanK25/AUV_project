@@ -7,7 +7,7 @@ from matplotlib.gridspec import GridSpec
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 from xarray import DataArray, Dataset
 from utils import chem_utils
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageSequence
 
 def draw_environment(chemical_file_path, time_target, z_target, data_parameter='pH') -> tuple[Figure, Axes]:
     """
@@ -174,9 +174,16 @@ def create_auv_sprite(filename=None) -> Image.Image:
     
     return image
 
+def remove_frames_from_gif(input_path, output_path, frames_to_remove):
+    gif = Image.open(input_path)
+
+    frames = [frame.copy() for frame in ImageSequence.Iterator(gif)]
+    frames_to_keep = [frame for i, frame in enumerate(frames) if i not in frames_to_remove and i % 2 == 0]
+    frames_to_keep[0].save(output_path, save_all=True, append_images=frames_to_keep[1:], loop=0)
+
 
 if __name__ == "__main__":
-    from QAgent_new import Q_Agent
+    from Q_Agent import Q_Agent
     from Q_environment import Q_Environment
     from policy_funcs import episilon_greedy
     from Q_simulator import load_q_table
