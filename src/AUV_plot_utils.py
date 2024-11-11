@@ -145,7 +145,7 @@ def animate_agent_behavior(position_history, chemical_file_path, time_target, z_
         gif_name = Path(gif_name)
         gif_name.parent.mkdir(exist_ok=True, parents=True)
         try:
-            writer = PillowWriter(fps=1000 // interval)
+            writer = PillowWriter(fps = 30000 // interval)
             ani.save(gif_name, writer=writer)
         except ValueError as e:
             print(f"Error in saving animation: {e}")
@@ -185,8 +185,8 @@ if __name__ == "__main__":
     agent = Q_Agent(env, policy=episilon_greedy)
     agent.q_table = load_q_table(r"results\q_tables\q_tables_by_episodes\episilon_greedy\episode_49_reward_trace_area_depth_67_lawn_size_50.pkl")
     agent.run(max_steps=5000)
-    lawnmover_name = Path(r'.\results\gifs\lawnmover.gif')
-    action_name = Path(r'.\results\gifs\actions.gif')
+    lawnmover_name = None # Path(r'.\results\gifs\lawnmover.gif')
+    action_name = None # Path(r'.\results\gifs\actions.gif')
     sprite_path = None
     print("starting animating")
     # animate_agent_behavior(agent.lawnmover_actions, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=lawnmover_name, sprite_path=sprite_path)
