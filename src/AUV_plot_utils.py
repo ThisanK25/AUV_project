@@ -178,7 +178,7 @@ def remove_frames_from_gif(input_path, output_path, frames_to_remove):
     gif = Image.open(input_path)
 
     frames = [frame.copy() for frame in ImageSequence.Iterator(gif)]
-    frames_to_keep = [frame for i, frame in enumerate(frames) if i not in frames_to_remove and i % 2 == 0]
+    frames_to_keep = [frame for i, frame in enumerate(frames) if i not in frames_to_remove and i % 3 == 0]
     frames_to_keep[0].save(output_path, save_all=True, append_images=frames_to_keep[1:], loop=0)
 
 
@@ -188,13 +188,14 @@ if __name__ == "__main__":
     from policy_funcs import episilon_greedy
     from Q_simulator import load_q_table
 
-    env = Q_Environment(r"sim\SMART-AUVs_OF-June-1c-0002.nc", depth=66)
-    agent = Q_Agent(env, policy=episilon_greedy)
-    agent.q_table = load_q_table(r"results\q_tables\q_tables_by_episodes\episilon_greedy\episode_49_reward_trace_area_depth_67_lawn_size_50.pkl")
-    agent.run(max_steps=5000)
-    lawnmover_name = None # Path(r'.\results\gifs\lawnmover.gif')
-    action_name = None # Path(r'.\results\gifs\actions.gif')
-    sprite_path = None
-    print("starting animating")
-    # animate_agent_behavior(agent.lawnmover_actions, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=lawnmover_name, sprite_path=sprite_path)
-    animate_agent_behavior(agent.actions_performed, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=action_name, sprite_path=sprite_path)
+    remove_frames_from_gif(Path(r".\results\gifs\actions.gif"), r".\results\gifs\actions3.gif", list(range(600)) + list(range(1750, 4000)))
+    #env = Q_Environment(r"sim\SMART-AUVs_OF-June-1c-0002.nc", depth=66)
+    #agent = Q_Agent(env, policy=episilon_greedy)
+    #agent.q_table = load_q_table(r"results\q_tables\q_tables_by_episodes\episilon_greedy\episode_49_reward_trace_area_depth_67_lawn_size_50.pkl")
+    #agent.run(max_steps=5000)
+    #lawnmover_name = None # Path(r'.\results\gifs\lawnmover.gif')
+    #action_name = None # Path(r'.\results\gifs\actions.gif')
+    #sprite_path = None
+    #print("starting animating")
+    ## animate_agent_behavior(agent.lawnmover_actions, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=lawnmover_name, sprite_path=sprite_path)
+    #animate_agent_behavior(agent.actions_performed, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=action_name, sprite_path=sprite_path)
