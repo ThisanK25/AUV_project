@@ -37,35 +37,30 @@ def draw_environment(chemical_file_path, time_target, z_target, data_parameter='
     return fig, ax
 
 
-def plot_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, figure_name=None) -> None:
-    fig, ax = draw_environment(chemical_file_path, time_target, z_target, data_parameter='pH') 
+def plot_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', figure_name=None, ax=None) -> None:
+    if ax is None:
+        fig, ax = draw_environment(chemical_file_path, time_target, z_target, data_parameter) 
+    else:
+        fig, _ = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
+        
     x_coords, y_coords = zip(*position_history)
     ax.plot(x_coords, y_coords, marker='o', color='black', label='Agent Path')
-    #for i, (x_pos, y_pos) in enumerate(self.position_history):
-    #    ax.annotate(f'{i}', (x_pos, y_pos))
-    if zoom:
-        # Calculate bounds
-        x_min, x_max = min(x_coords), max(x_coords)
-        y_min, y_max = min(y_coords), max(y_coords)
-        padding_x = (x_max - x_min) * 0.1
-        padding_y = (y_max - y_min) * 0.1
-        # Set plot limits
-        ax.set_xlim(x_min - padding_x, x_max + padding_x)
-        ax.set_ylim(y_min - padding_y, y_max + padding_y)
     
     # Add labels and title
     ax.set_xlabel('Easting [m]')
     ax.set_ylabel('Northing [m]')
-    plt.title('Agent Path with Chemical Environment')
-    plt.grid(True)
-    plt.legend()
+    ax.set_title('Agent Path with Chemical Environment')
+    ax.grid(True)
+    ax.legend()
+    
     if figure_name:
         figure_name = Path(figure_name)
         figure_name.parent.mkdir(exist_ok=True, parents=True)
         plt.savefig(figure_name)
         plt.close()
     else:
-        plt.show()  
+        if ax is None:
+            plt.show()  
 
 def plot_gas_accuracy_vs_episodes(ax, episodes_trained, gas_accuracy):
     if len(episodes_trained) != len(gas_accuracy):
@@ -77,30 +72,18 @@ def plot_gas_accuracy_vs_episodes(ax, episodes_trained, gas_accuracy):
     ax.set_title('Gas Accuracy vs Episodes Trained')
     ax.grid(True)
 
-def plot_agent_behavior_specific_episode(ax, position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False) -> None:
-    fig, ax = draw_environment(chemical_file_path, time_target, z_target, data_parameter='pH')
-    
-    x_coords, y_coords = zip(*position_history)
-    ax.plot(x_coords, y_coords, marker='o', color='black', label='Agent Path')
+def run_tests_and_plot_3_episodes_combined(gas_accuracy:list[float], agent_behavior:list[int], z_target:int, q_table_names, time_target:int=0, 
+                                                  episodes_to_plot=None, chemical_file_path = Path(r"sim\SMART-AUVs_OF-June-1c-0002.nc")) -> None:
+    from random import randint
+    if len(gas_accuracy) < 3:
+        raise ValueError("Number of episodes must be at least 3")
 
-    if zoom:
-        x_min, x_max = min(x_coords), max(x_coords)
-        y_min, y_max = min(y_coords), max(y_coords)
-        padding_x = (x_max - x_min) * 0.1
-        padding_y = (y_max - y_min) * 0.1
-        ax.set_xlim(x_min - padding_x, x_max + padding_x)
-        ax.set_ylim(y_min - padding_y, y_max + padding_y)
 
-    ax.set_xlabel('Easting [m]')
-    ax.set_ylabel('Northing [m]')
-    ax.set_title('Agent Path with Chemical Environment')
-    ax.grid(True)
-    ax.legend()
-
-def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agent_behavior:list[int], z_target:int, q_table_names, time_target:int=0, episodes_to_plot=[1, 25, 50]) -> None:
+    if episodes_to_plot is None:
+        episodes_to_plot: list[int] = [0, randint(1, len(gas_accuracy)-1), len(gas_accuracy)-1]
     episodes: list[int] = [len(gas_accuracy)]
 
-    figure_names = [q_table_names[i-1] for i in episodes_to_plot]
+    figure_names = [q_table_names[i] for i in episodes_to_plot]
     fig = plt.figure(figsize=(16, 20))
     gs = GridSpec(4, 1, height_ratios=[1, 1, 1, 1.5])
 
@@ -110,14 +93,11 @@ def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agen
 
     for i, episode in enumerate(episodes_to_plot):
         if episode < len(agent_behavior):
-            # TODO dette kan ikke være hardkoda på denne måten
-            chemical_file_path = f"episode_{episode}_reward_trace_area_episilon_greedy_lawn_size_50"
             ax_agent_behavior = fig.add_subplot(gs[i + 1, 0])
             figure_name = figure_names[i]
-            # skal dette skje hver episode?
-            plot_agent_behavior_specific_episode(ax_agent_behavior, agent_behavior[episode], chemical_file_path, time_target, z_target, figure_name=figure_name)
+            plot_agent_behavior(agent_behavior[episode], chemical_file_path, time_target, z_target, figure_name=figure_name, ax=ax_agent_behavior)
         else:
-            print(f"Episode {episode} not available. Maximum available episode is {len(agent_behavior) - 1}.")
+            print(f"Episode {episode} not available. Maximum available episode is {len(agent_behavior)-1}.")
 
     plt.tight_layout()
 

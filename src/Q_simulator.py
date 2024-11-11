@@ -168,10 +168,11 @@ def run_tests():
     sim = Q_Simulator(env)
     gas_accuracy = []
     agent_behavior: list[list] = []
+
     for q_table in q_tables_by_episode:
         gas_accuracy.append(sim.test_agent(reward_func=reward_funcs.reward_trace_area, max_steps=2, policy=policy_funcs.episilon_greedy, q_table=q_table))
         agent_behavior.append(sim.agent.position_history)
-    run_tests_and_plot_specific_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, episodes_to_plot=[1, 25, 50], q_table_names = q_table_names)
+    run_tests_and_plot_3_episodes_combined(gas_accuracy=gas_accuracy, agent_behavior=agent_behavior, z_target=depth, q_table_names = q_table_names)
 
 
 if __name__ == "__main__":
