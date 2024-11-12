@@ -44,7 +44,7 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
         fig, _ = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
         
     x_coords, y_coords = zip(*position_history)
-    ax.plot(x_coords, y_coords, marker='o', color='black', label='Agent Path')
+    ax.plot(x_coords, y_coords, marker='-k', color='black', label='Agent Path')
     
     # Add labels and title
     ax.set_xlabel('Easting [m]')
@@ -185,7 +185,7 @@ def remove_frames_from_gif(input_path:Path, output_path:Path, frames_to_remove:l
         output_path : The path to the new gif
         frames_to_remove : Number of frames to skip in the new gif, effectivly speeding it up
     """
-    
+
     gif = Image.open(input_path)
     frames = [frame.copy() for frame in ImageSequence.Iterator(gif)]
     frames_to_keep = [frame for i, frame in enumerate(frames) if i not in frames_to_remove and i % (num_frames_to_skip+1) == 0]
