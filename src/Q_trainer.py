@@ -14,6 +14,16 @@ class Q_trainer:
         self._q_table = np.zeros(q_table_shape, dtype=np.int32)
 
     def train(self, episodes=50, max_steps_per_episode=2000, lawnmover_size=70, reward_func = reward_gas_level, policy = episilon_greedy, store_q_table_by_episode = False) -> None:
+        """
+        Trains an agent
+        Input
+            episodes: The number of episodes to run, defaults to 50
+            max_steps_per_episode: The number of training steps the agent takes, defaults to 2000
+            lawnmover_size: The size of the lawnmover path taken befor training
+            reward_func: A reward function, defaults to reward_gas_level
+            policy: A policy function, dedaults to epsilon_greedy
+            store_q_tabke_by_episode: If the q_tables should be stored each episode, defaults to False
+        """
         policy_name:str = policy.__name__
         reward_name:str = reward_func.__name__
 
@@ -35,9 +45,15 @@ class Q_trainer:
             self.save_q_table(filename=filename)
 
     def _save_position_history(self, agent: Q_Agent) -> None:
+        """
+        Saves the position history from an agent
+        """
         self._position_history = agent.position_history
     
     def save_q_table(self, filename:Path = Path(r"./results/q_tables/q_table.pkl")) -> None:
+        """
+        saves the q_table
+        """
         # Eunsure that the path exists
         filename.parent.mkdir(exist_ok=True, parents=True)
         with open(filename, "wb") as f:
@@ -45,6 +61,9 @@ class Q_trainer:
     
     @property
     def position_history(self) -> list:
+        """
+        Returns the position history stored in the trainer. Returns empty if there is none.
+        """
         if hasattr(self, "_position_history"):
             return self._position_history
         return []

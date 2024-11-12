@@ -155,6 +155,9 @@ def animate_agent_behavior(position_history, chemical_file_path, time_target, z_
 
 
 def create_auv_sprite(filename=None) -> Image.Image:
+    """
+    Draws a simple sprite of a yellow submarine. Don't sue us.
+    """
     image = Image.new("RGBA", (200, 100), (255, 255, 255, 0))
     draw = ImageDraw.Draw(image)
 
@@ -174,11 +177,18 @@ def create_auv_sprite(filename=None) -> Image.Image:
     
     return image
 
-def remove_frames_from_gif(input_path, output_path, frames_to_remove):
+def remove_frames_from_gif(input_path:Path, output_path:Path, frames_to_remove:list[int], num_frames_to_skip = 0) -> None:
+    """
+    Removes frames from a gif.
+    input:
+        input_path : The gif to edit
+        output_path : The path to the new gif
+        frames_to_remove : Number of frames to skip in the new gif, effectivly speeding it up
+    """
+    
     gif = Image.open(input_path)
-
     frames = [frame.copy() for frame in ImageSequence.Iterator(gif)]
-    frames_to_keep = [frame for i, frame in enumerate(frames) if i not in frames_to_remove and i % 3 == 0]
+    frames_to_keep = [frame for i, frame in enumerate(frames) if i not in frames_to_remove and i % (num_frames_to_skip+1) == 0]
     frames_to_keep[0].save(output_path, save_all=True, append_images=frames_to_keep[1:], loop=0)
 
 

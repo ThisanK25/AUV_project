@@ -41,14 +41,18 @@ class Q_Agent:
         self._lawnmover_actions: int  = 0
         
     def run(self, lawnmower_size:int=70, max_steps:int = 100) -> None:
+        """
+        Runs the agent for a given number of steps, starting with a lawnmover path with a given line distance.
+        """
         self._env.register_new_agent()
         self.perform_cartesian_lawnmower(lawnmower_size)
-        self._lawnmover_actions = len(self._actions_performed)
         self._move_to(self._env.min_unvisited_position(self._visited))
+        # Store the number of positions visited before choosing actions.
+        self._lawnmover_actions = len(self._actions_performed)
         reward = 0
         num_bad_steps = 0
         for step in range(max_steps):
-            current_state = self._env.get_state_from_position(self._position, self._heading)
+            current_state: tuple[PH_Reading, ...] = self._env.get_state_from_position(self._position, self._heading)
             bad_state = all((x == PH_Reading.HIGH for x in current_state))
             # TODO This is a bit ugly, but the following functions expect state as a tuple of integers. If I had time I would refactor this.
             current_state = tuple(map(lambda x: x.value, current_state))
@@ -63,27 +67,34 @@ class Q_Agent:
             else:
                 num_bad_steps = 0
 
-            action = self.choose_action(current_state)
-            next_state = self.execute_action(action)
+            action = self._choose_action(current_state)
+            next_state = self._execute_action(action)
             reward += self._reward_function(self, next_state)
-            self.update_q_table(current_state, action, reward, next_state)
+            self._update_q_table(current_state, action, reward, next_state)
             current_state = next_state
 
 
-    def choose_action(self, state:tuple[int, int, int]) -> int:
+    def _choose_action(self, state:tuple[int, int, int]) -> int:
+        # Calls the policy function.
         return self._policy(self, state)
     
-    def update_q_table(self, state:int, action:int, reward:int, next_state:int) -> None:
+    def _update_q_table(self, state:int, action:int, reward:int, next_state:int) -> None:
+        """
+        Updates the q-table.
+        """
         current_q = self._q_table[state][action]
         maximum_future_reward = np.max(self._q_table[next_state])
         new_q = (1 - self._alpha) * current_q + self._alpha * (reward + self._gamma * maximum_future_reward)
         self._q_table[state][action] = new_q
     
-    def execute_action(self, action) -> tuple:
-        next_state: tuple = self.perform_action(action)
+    def _execute_action(self, action) -> tuple:
+        next_state: tuple = self._perform_action(action)
         return next_state
     
-    def perform_action(self, action) -> tuple:
+    def _perform_action(self, action) -> tuple:
+        """
+        Performes the action, and moves the agent.
+        """
         action = AUV_ACTIONS(action)
         heading = self._heading.value
         if action == AUV_ACTIONS.RIGHT:
@@ -95,6 +106,9 @@ class Q_Agent:
 
 
     def _next_position(self) -> tuple[int, int, int]:
+        """
+        Calculates the next potential position without bounds checking
+        """
         x, y, z = self._position
         match self._heading:
             case Direction.North:
@@ -108,8 +122,11 @@ class Q_Agent:
         return new_pos
     
     def _move_forward(self) -> tuple:
+        """
+        Adds the current position to the visited set, then moves the agent if it can. Else stay stationary. 
+        """
         self._visited.add(self._position)
-        new_pos = self._next_position()
+        new_pos: tuple[int, int, int] = self._next_position()
         if self._env.inbounds(new_pos):
             self._position = new_pos # We can throw a ValueError here to catch during training.
             self._actions_performed.append(new_pos[:2])
@@ -139,6 +156,9 @@ class Q_Agent:
             self._move_forward()
         
     def perform_cartesian_lawnmower(self, turn_length:int = 70, start_direction: Direction = Direction.East) -> None:
+        """
+        Performes lawnmover path with the supplide turn lenght from the current location of the AUV to the upper right corner of the environmnent.
+        """
         def move_east() -> None:
             while self._env.inbounds(self._next_position()):
                 self._move_forward()
@@ -159,7 +179,7 @@ class Q_Agent:
         
         self._heading = start_direction
         previous_heading = self._heading
-        while self._position != self._env.lower_right_corner:
+        while self._position != self._env.upper_right_corner:
             match self._heading:
                 case Direction.East:
                     move_east()
@@ -173,10 +193,16 @@ class Q_Agent:
                     previous_heading = Direction.West
 
     def visited(self) -> bool:
+        """
+        Checks if the AUV has been on its current position before.
+        """
         return self._position in self._visited
 
     @property
     def q_table(self) -> np.ndarray:
+        """
+        Returns the q_table stored. If a Q_table is not set it creates a new table.
+        """
         if not hasattr(self, "_q_table"):
             # Sets an empty q_table if non is set.
             self._q_table = np.zeros((3, 3, 3, 3), dtype=np.int32)
@@ -185,6 +211,9 @@ class Q_Agent:
     
     @property
     def epsilon(self) -> float:
+        """
+        Returns the current value of epsilon.
+        """
         return self._epsilon
     
     @property

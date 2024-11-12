@@ -23,9 +23,17 @@ class Q_Environment:
         self._seen_by_agent = set()
 
     def register_new_agent(self) -> None:
+        """
+        Reset the seen_by_agent set.
+        """
+        # TODO this should be moved to the agent-class, but to facilitate cashing of gas-values they where placed here
+        # TODO Changig this should not be a to large task, but for now just rememeber to call this function if using multiple agents in the same environment
         self._seen_by_agent = set()
 
     def _set_classification_limit(self) -> list[float]:
+        """
+        Sets the classification limits for PH-values in accordance with the depth. 
+        """
         ph_69 = [7.7, 7.5] 
         ph_68 = [7.74, 7.62] 
         ph_67 = [7.76, 7.69] 
@@ -50,7 +58,10 @@ class Q_Environment:
                 current_pH_classification_limits = ph_64
         return current_pH_classification_limits
 
-    def get_state_from_position(self, pos, heading):
+    def get_state_from_position(self, pos, heading) -> tuple[PH_Reading, ...]:
+        """
+        Classifies the PH-values that corresponds with the position and heading of the AUV.
+        """
         return tuple(map(self.classify_pH, self.get_current_pH_values(pos, heading)))
 
     def get_current_pH_values(self, position, heading)-> tuple:
@@ -87,6 +98,10 @@ class Q_Environment:
         return right_pH, left_pH, front_pH
 
     def get_pH_at_position(self, pos:tuple[int, int, int], time_target:int) -> float:
+        """
+        Extracts the average ph_values for the three possible actions.
+        The values are then cashed for future use befor returnd as a tuple.
+        """
         if not self.inbounds(pos):
             return float('inf')
         x, y, z = pos
@@ -102,13 +117,12 @@ class Q_Environment:
         return avg_value
     
 
-    def classify_pH(self, pH_value):
+    def classify_pH(self, pH_value) -> PH_Reading:
         """
-        Classify pH value into discrete states:
-        - Return 0 if pH > 7.77 (basic)
-        - Return 2 if pH < 7.5 (acidic)
-        - Return 1 if 7.5 <= pH <= 7.77 (neutral)
-        - This is basic settings for depth: 69 meter
+        Classify pH value into discrete states as defined by the classification limit:
+        LOW
+        MEDIUM
+        HIGH
         """
         high, low = self._current_classification_limit
         if pH_value > high:
@@ -120,21 +134,34 @@ class Q_Environment:
 
 
     def inbounds(self, pos:tuple[int, int, int]) -> bool:
+        """
+        Checks if position is inbouds of the environment.
+        """
         x, y, _ = pos
         return self._x_size[0] <= x < self._x_size[1] and \
                self._y_size[0] <= y < self._y_size[1]
 
     def _insert_data_value(self, avg_value:float, pos:tuple[int, int, int]) -> None:
+        """
+        Stores the datavalues in the _collected data table.
+        """
         x, y , _= pos
         self._collected_data[x - self._x_size[0]][y - self._y_size[0]] = avg_value
 
     def _get_table_data_at_position(self, pos:tuple[int, int, int]) -> float:
+        """
+        Extracts the table data from a position. Infinity returned if out of bounds.
+        """
         if not self.inbounds(pos):
             return float('inf')
         x, y, _ = pos
         return self._collected_data[x-self._x_size[0]][y-self._y_size[0]]
     
     def min_unvisited_position(self, visited: set) -> tuple[int, int, int]:
+        """
+        Finds the minimum ph-value that is not visited, but known by an agent.
+        !!! If the encvironment is used for several agent, the agent must first call register_new_agent
+        """
         min_value: float = np.inf
         min_position = None
         # The agent has not seen all the indexes in collected data, so we need to check if the current agent knows about a location.
@@ -149,6 +176,9 @@ class Q_Environment:
 
     @property
     def min_pH_position(self) -> tuple[int, int, int]:
+        """
+        Returns the minimum explored value. This can only be used by single agent environments. 
+        """
         min_pH_position = np.unravel_index(np.argmin(self._collected_data), self._collected_data.shape)
         
         return (min_pH_position[0] + self._x_size[0], min_pH_position[1] + self._y_size[0], self._depth)  
@@ -158,7 +188,7 @@ class Q_Environment:
         return self._x_size[0], self._y_size[0], self._depth
     
     @property
-    def lower_right_corner(self) -> tuple[int, int, int]:
+    def upper_right_corner(self) -> tuple[int, int, int]:
         return self._x_size[1]-1, self._y_size[1]-1, self._depth
     
     @property
@@ -171,6 +201,9 @@ class Q_Environment:
     
     @property
     def traverse_environment(self) -> Generator[tuple[int, int, int], Any, None]:
+        """
+        Returns a generator that moves across the entire environment. Can be used to map out all data values.
+        """
         x_min, x_max = self._x_size
         y_min, y_max = self._y_size
         z = self._depth
