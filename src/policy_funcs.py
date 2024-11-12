@@ -2,7 +2,6 @@ import numpy as np
 
 def soft_max(agent, state: tuple[int, int, int]) -> int:
     q_values: np.ndarray = agent.q_table[state]
-    
     # Softmax is not numerically stable, so this will normalize the exponent to prevent overflow
     max_q_value: np.float64 = np.max(q_values)  
     q_values: np.ndarray = q_values - max_q_value

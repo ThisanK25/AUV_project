@@ -6,7 +6,7 @@ import reward_funcs
 import policy_funcs
 from tqdm import tqdm
 from QAgent_Enums import PH_Reading
-from QAgent_new import Q_Agent
+from Q_Agent import Q_Agent
 from Q_environment import Q_Environment
 from AUV_plot_utils import *
 import matplotlib.pyplot as plt
@@ -92,12 +92,19 @@ class Q_Simulator:
     
 
 def load_plume_map(plume_map_path:Path) -> set:
+    """
+    Loads the gas_node set from a pkl file. 
+    """
     if not plume_map_path.exists():
         raise ValueError(f"invalid path: {plume_map_path}")
     with open(plume_map_path, "rb") as plume_map:
         return pickle.load(plume_map)
 
 def load_all_plume_maps():
+    """
+    A generator of all plume maps in the ./sim/plume_map directory.
+    This is populated as simumator environments are used.
+    """
     for file in Path(r"./sim/plume_map").iterdir():
         if file.is_file():
             yield load_plume_map(file)
@@ -109,7 +116,10 @@ def load_q_table(q_table_pkl_file:Path) -> np.ndarray:
     with open(q_table_pkl_file, "rb") as q_paht:
         return pickle.load(q_paht)
     
-def extract_q_table_files(reward_func, policy_func, lawn_size):
+def extract_q_table_files(reward_func, policy_func, lawn_size) -> list:
+    """
+    Locates all q_tables that are matching the parameters.
+    """
     reward_func_name: str = reward_func.__name__
     policy_func_name: str = policy_func.__name__
     reward_func_name_length: int = len(reward_func_name.split("_"))
@@ -130,21 +140,31 @@ def extract_q_table_files(reward_func, policy_func, lawn_size):
     return q_files
 
 def extract_episode_number(path:Path) -> int:
+        """
+        Returns the training episode number from a path, this can be used as a key for sorting files.
+        """
         # Key for sorting the files
         return int(path.stem.split("_")[1])
 
 def load_q_tables_sorted_by_episode(reward_func, policy_func, lawn_size) -> map:
     """
-    Fetches the stored_q_tables
+    Fetches the stored_q_tables sorted by episode number
     """
     q_files= extract_q_table_files(reward_func, policy_func, lawn_size)
     q_files.sort(key=extract_episode_number)
     return map(load_q_table, q_files)
 
 def fetch_sim_files(directory = Path(r"./sim")) -> filter:
+    """
+    Returns a filter of files in the ./sim-directory. This should only be the raw environment simulation data.
+    """
     return filter(Path.is_file, directory.iterdir())
 
 def read_and_store_sim_files() -> None:
+    """
+    Reads a sim_file, and creates a simulation environment. This will generate a plume map matching the environment
+    !!! This is slow
+    """
     sim_files = list(fetch_sim_files())
     with tqdm(total=len(sim_files) * 6, ncols=100, desc="Reading files", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red', position=0) as pbar:
         for file_path in sim_files:
@@ -153,7 +173,8 @@ def read_and_store_sim_files() -> None:
                 sim = Q_Simulator(env, Q_Agent(env))
                 pbar.update(1)
 
-def plot_results():
+def plot_results() -> None:
+    # TODO
     q_tables_dir = Path('results/q_tables')
     q_table_files = [f for f in q_tables_dir.iterdir() if f.is_file() and f.name.startswith('episode')]
     
@@ -203,7 +224,10 @@ def plot_results():
     plt.tight_layout()
     plt.show()
 
-def run_tests():
+def run_tests() -> None:
+    """
+    Loads q-tables by episode, and plots the frequency of gas-nodes visited.
+    """
     q_tables_by_episode: map = load_q_tables_sorted_by_episode(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
     q_table_names = extract_q_table_files(policy_func=policy_funcs.soft_max, reward_func=reward_funcs.reward_trace_area, lawn_size=50)
     q_table_names.sort(key=extract_episode_number)

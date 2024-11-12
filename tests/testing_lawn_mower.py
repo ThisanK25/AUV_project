@@ -8,7 +8,7 @@ from QAgent_Enums import Direction, AUV_ACTIONS
 from Q_environment import Q_Environment
 from reward_funcs import reward_gas_level
 from utils import lawnmower_path as lp
-from QAgent_new import Q_Agent
+from Q_Agent import Q_Agent
 from utils import chem_utils
 from Q_trainer import Q_trainer
 

@@ -1,24 +1,26 @@
 from pathlib import Path
 from matplotlib import pyplot as plt
+from matplotlib.animation import FuncAnimation, PillowWriter
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
-from xarray import DataArray
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+from xarray import DataArray, Dataset
 from utils import chem_utils
-import matplotlib.animation as animation
-from matplotlib.animation import PillowWriter
-from Q_environment import Q_Environment
-from QAgent_new import Q_Agent
-import reward_funcs
-import policy_funcs
-import Q_trainer
+from PIL import Image, ImageDraw, ImageSequence
 
-def plot_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False, figure_name=None) -> None:
+def draw_environment(chemical_file_path, time_target, z_target, data_parameter='pH') -> tuple[Figure, Axes]:
+    """
+    Creates a base environment figure and returns the figure and axes.
+    This can be used as a base for drawing.
+    """
     plt.rcParams.update({
         "text.usetex": False,
         "font.family": "Dejavu Serif",
         "mathtext.fontset": "dejavuserif"
     })
     # Load chemical dataset
-    chemical_dataset = chem_utils.load_chemical_dataset(chemical_file_path)
+    chemical_dataset: Dataset = chem_utils.load_chemical_dataset(chemical_file_path)
     # Extract data to plot the environment
     val_dataset: DataArray = chemical_dataset[data_parameter].isel(time=time_target, siglay=z_target)
     val = val_dataset.values[:72710]
@@ -26,44 +28,43 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
     y = val_dataset['y'].values[:72710]
     x = x - x.min()
     y = y - y.min()
-    # Plot environment and agent's path on the same axes
+    
+    # Plot environment
     fig, ax = plt.subplots(figsize=(12, 8))
     scatter = ax.scatter(x, y, c=val, cmap='coolwarm', s=2, alpha=0.6, label='Chemical Environment')
     cbar = fig.colorbar(scatter, ax=ax)
     cbar.set_label(f'{data_parameter} Value')
+    return fig, ax
+
+
+def plot_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', figure_name=None, ax=None) -> None:
+    if ax is None:
+        fig, ax = draw_environment(chemical_file_path, time_target, z_target, data_parameter) 
+    else:
+        fig, _ = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
         
     x_coords, y_coords = zip(*position_history)
-    ax.plot(x_coords, y_coords, marker='o', color='black', label='Agent Path')
-    #for i, (x_pos, y_pos) in enumerate(self.position_history):
-    #    ax.annotate(f'{i}', (x_pos, y_pos))
-    if zoom:
-        # Calculate bounds
-        x_min, x_max = min(x_coords), max(x_coords)
-        y_min, y_max = min(y_coords), max(y_coords)
-        padding_x = (x_max - x_min) * 0.1
-        padding_y = (y_max - y_min) * 0.1
-        # Set plot limits
-        ax.set_xlim(x_min - padding_x, x_max + padding_x)
-        ax.set_ylim(y_min - padding_y, y_max + padding_y)
+    ax.plot(x_coords, y_coords, marker='k-', color='black', label='Agent Path')
     
     # Add labels and title
     ax.set_xlabel('Easting [m]')
     ax.set_ylabel('Northing [m]')
-    plt.title('Agent Path with Chemical Environment')
-    plt.grid(True)
-    plt.legend()
+    ax.set_title('Agent Path with Chemical Environment')
+    ax.grid(True)
+    ax.legend()
+    
     if figure_name:
         figure_name = Path(figure_name)
         figure_name.parent.mkdir(exist_ok=True, parents=True)
         plt.savefig(figure_name)
         plt.close()
     else:
-        plt.show()  
-
+        if ax is None:
+            plt.show()  
 
 def plot_gas_accuracy_vs_episodes(ax, episodes_trained, gas_accuracy):
     if len(episodes_trained) != len(gas_accuracy):
-        raise ValueError("The length of episodes_trained should match the length of gas_accuracy")
+        raise ValueError(f"Episodes trained does not match gas accuracy {len(episodes_trained)=} {len(gas_accuracy)=}")
     
     ax.plot(episodes_trained, gas_accuracy, marker='o', linestyle='-', color='b')
     ax.set_xlabel('Episodes Trained')
@@ -71,48 +72,18 @@ def plot_gas_accuracy_vs_episodes(ax, episodes_trained, gas_accuracy):
     ax.set_title('Gas Accuracy vs Episodes Trained')
     ax.grid(True)
 
-def plot_agent_behavior_specific_episode(ax, position_history, chemical_file_path, time_target, z_target, data_parameter='pH', zoom=False):
-    plt.rcParams.update({
-        "text.usetex": False,
-        "font.family": "Dejavu Serif",
-        "mathtext.fontset": "dejavuserif"
-    })
-    # Load chemical dataset
-    chemical_dataset = chem_utils.load_chemical_dataset(chemical_file_path)
-    # Extract data to plot the environment
-    val_dataset = chemical_dataset[data_parameter].isel(time=time_target, siglay=z_target)
-    val = val_dataset.values[:72710]
-    x = val_dataset['x'].values[:72710]
-    y = val_dataset['y'].values[:72710]
-    x = x - x.min()
-    y = y - y.min()
-    # Plot environment and agent's path on the same axes
-    scatter = ax.scatter(x, y, c=val, cmap='coolwarm', s=2, alpha=0.6, label='Chemical Environment')
-    cbar = plt.colorbar(scatter, ax=ax)
-    cbar.set_label(f'{data_parameter} Value')
-    
-    x_coords, y_coords = zip(*position_history)
-    ax.plot(x_coords, y_coords, marker='o', color='black', label='Agent Path')
+def run_tests_and_plot_3_episodes_combined(gas_accuracy:list[float], agent_behavior:list[int], z_target:int, q_table_names, time_target:int=0, 
+                                                  episodes_to_plot=None, chemical_file_path = Path(r"sim\SMART-AUVs_OF-June-1c-0002.nc")) -> None:
+    from random import randint
+    if len(gas_accuracy) < 3:
+        raise ValueError("Number of episodes must be at least 3")
 
-    if zoom:
-        x_min, x_max = min(x_coords), max(x_coords)
-        y_min, y_max = min(y_coords), max(y_coords)
-        padding_x = (x_max - x_min) * 0.1
-        padding_y = (y_max - y_min) * 0.1
-        ax.set_xlim(x_min - padding_x, x_max + padding_x)
-        ax.set_ylim(y_min - padding_y, y_max + padding_y)
 
-    ax.set_xlabel('Easting [m]')
-    ax.set_ylabel('Northing [m]')
-    ax.set_title('Agent Path with Chemical Environment')
-    ax.grid(True)
-    ax.legend()
+    if episodes_to_plot is None:
+        episodes_to_plot: list[int] = [0, randint(1, len(gas_accuracy)-1), len(gas_accuracy)-1]
+    episodes: list[int] = [len(gas_accuracy)]
 
-def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agent_behavior:list[int], z_target:int, q_table_names, time_target:int=0, episodes_to_plot=[1, 25, 50]):
-    
-    episodes = [i for i in range(51)]
-    # Fetching figurename 
-    figure_names = [q_table_names[i] for i in [1, 25, 50]]
+    figure_names = [q_table_names[i] for i in episodes_to_plot]
     fig = plt.figure(figsize=(16, 20))
     gs = GridSpec(4, 1, height_ratios=[1, 1, 1, 1.5])
 
@@ -122,12 +93,11 @@ def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agen
 
     for i, episode in enumerate(episodes_to_plot):
         if episode < len(agent_behavior):
-            chemical_file_path = f"episode_{episode}_reward_trace_area_episilon_greedy_lawn_size_50"
             ax_agent_behavior = fig.add_subplot(gs[i + 1, 0])
             figure_name = figure_names[i]
-            plot_agent_behavior_specific_episode(ax_agent_behavior, agent_behavior[episode], chemical_file_path, time_target, z_target, figure_name=figure_name)
+            plot_agent_behavior(agent_behavior[episode], chemical_file_path, time_target, z_target, figure_name=figure_name, ax=ax_agent_behavior)
         else:
-            print(f"Episode {episode} not available. Maximum available episode is {len(agent_behavior) - 1}.")
+            print(f"Episode {episode} not available. Maximum available episode is {len(agent_behavior)-1}.")
 
     plt.tight_layout()
 
@@ -137,86 +107,105 @@ def run_tests_and_plot_specific_episodes_combined(gas_accuracy:list[float], agen
     
     plt.show()
 
-def animate_lawnmower_and_actions(env, agent, save_path="./results/agent_animation.gif"):
+def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', gif_name=None, interval=100, sprite_path=None) -> None:
     """
-    Animates the agent's lawnmower path and subsequent actions on the environment in a pointwise manner,
-    completing in 10 seconds and accounting for environment boundaries.
-    Saves the animation as a GIF.
+    Animates the agens behaviour. 
+    !!! Saving the animations is a very intensive task. Running it without storing is fairly quick.!!!
+    The sprite was supposed to move along the path, but it is currently not working as expected.
     """
-    fig, ax = plt.subplots()
-    ax.set_title(f"Lawnmower Path and Further Exploration (Turn length=50; Depth={env.depth})")
+    fig, ax = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
+    x_coords, y_coords = zip(*[(pos[0], pos[1]) for pos in position_history])
+    agent_path, = ax.plot([], [], 'k-', markersize=5, label='Agent Path')
     
-    # Environment bounds from Q_Environment
-    x_min, x_max = env._x_size
-    y_min, y_max = env._y_size
-    ax.set_xlim(x_min, x_max)
-    ax.set_ylim(y_min, y_max)
-    ax.set_xlabel("x [m]")
-    ax.set_ylabel("y [m]")
-
-    # Plot gas field
-    chemical_dataset = env._chemical_dataset
-    val_dataset = chemical_dataset['pH'].isel(time=0, siglay=env.depth)
-    val = val_dataset.values[:72710]
-    x = val_dataset['x'].values[:72710]
-    y = val_dataset['y'].values[:72710]
-    x = x - x.min()
-    y = y - y.min()
+    if sprite_path is None:
+        sprite_image = create_auv_sprite()
+    else:
+        if not Path(sprite_path).exists():
+            sprite_image = create_auv_sprite(sprite_path)
+        sprite_image = plt.imread(sprite_path)
     
-    # Plot gas levels
-    scatter = ax.scatter(x, y, c=val, cmap='coolwarm', s=2)
-    cbar = fig.colorbar(scatter, ax=ax)
-    cbar.set_label('Value')
-    
-    # Paths
-    lawnmower_path = agent.lawnmover_actions
-    actions_path = agent.actions_performed
+    sprite_offset_image = OffsetImage(sprite_image, zoom=0.2)
+    sprite_artist = AnnotationBbox(sprite_offset_image, (x_coords[0], y_coords[0]), frameon=False)
+    ax.add_artist(sprite_artist)    
 
-    # Initialize scatter plots for each path
-    lawnmower_scatter = ax.scatter([], [], color='black', label="Lawnmower Path")
-    actions_scatter = ax.scatter([], [], color='white', label="Actions Performed After")
-    ax.legend()
-
-    # Lists to store the points for each scatter plot
-    lawnmower_x_data, lawnmower_y_data = [], []
-    actions_x_data, actions_y_data = [], []
-
-    # Update function for animation
     def update(frame):
-        # Plot lawnmower path points up to the current frame
-        if frame < len(lawnmower_path):
-            x, y, *_ = lawnmower_path[frame]  # Extract x, y
-            lawnmower_x_data.append(x)
-            lawnmower_y_data.append(y)
-            lawnmower_scatter.set_offsets(list(zip(lawnmower_x_data, lawnmower_y_data)))
-        else:
-            # Start plotting action points after lawnmower path is complete
-            adjusted_frame = frame - len(lawnmower_path)
-            if adjusted_frame < len(actions_path):  # Avoid exceeding length
-                x, y, *_ = actions_path[adjusted_frame]
-                actions_x_data.append(x)
-                actions_y_data.append(y)
-                actions_scatter.set_offsets(list(zip(actions_x_data, actions_y_data)))
+        agent_path.set_data(x_coords[:frame+1], y_coords[:frame+1])
+        sprite_artist.xy = (x_coords[frame], y_coords[frame])
+        return [agent_path, sprite_artist]
 
-        return lawnmower_scatter, actions_scatter
+    ani = FuncAnimation(fig, update, frames=range(len(x_coords)), interval=interval, blit=True)
 
-    # Calculate total frames and set the interval for 10 seconds duration
-    total_frames = len(lawnmower_path) + len(actions_path)
-    interval = 10000 / total_frames  # Duration in milliseconds divided by total frames
+    ax.set_xlabel('Easting [m]')
+    ax.set_ylabel('Northing [m]')
+    plt.title('Agent Path with Chemical Environment')
+    plt.grid(True)
+    plt.legend()
 
-    # Create the animation
-    ani = animation.FuncAnimation(fig, update, frames=total_frames, interval=interval)
-
-    # Save the animation as a GIF using PillowWriter
-    ani.save(save_path, writer=PillowWriter(fps=5000 / interval))
-    plt.show()
+    if gif_name:
+        gif_name = Path(gif_name)
+        gif_name.parent.mkdir(exist_ok=True, parents=True)
+        try:
+            writer = PillowWriter(fps = 30000 // interval)
+            ani.save(gif_name, writer=writer)
+        except ValueError as e:
+            print(f"Error in saving animation: {e}")
+            plt.close()
+    else:
+        plt.show()
 
 
-# Call the combined plot function to visualize the results
+def create_auv_sprite(filename=None) -> Image.Image:
+    """
+    Draws a simple sprite of a yellow submarine. Don't sue us.
+    """
+    image = Image.new("RGBA", (200, 100), (255, 255, 255, 0))
+    draw = ImageDraw.Draw(image)
+
+    uboat_color = "yellow"
+
+    draw.rectangle([60, 50, 140, 80], fill=uboat_color)
+    draw.ellipse([40, 50, 80, 80], fill="red")
+    draw.ellipse([120, 50, 160,80], fill="blue") 
+
+    draw.rectangle([90, 40, 110, 50], fill=uboat_color)
+
+    draw.line([100, 30, 100, 40], fill="black", width=2)
+
+    if filename:
+        if not Path(filename).exists():
+            image.save(filename)
+    
+    return image
+
+def remove_frames_from_gif(input_path:Path, output_path:Path, frames_to_remove:list[int], num_frames_to_skip = 0) -> None:
+    """
+    Removes frames from a gif.
+    input:
+        input_path : The gif to edit
+        output_path : The path to the new gif
+        frames_to_remove : Number of frames to skip in the new gif, effectivly speeding it up
+    """
+
+    gif = Image.open(input_path)
+    frames = [frame.copy() for frame in ImageSequence.Iterator(gif)]
+    frames_to_keep = [frame for i, frame in enumerate(frames) if i not in frames_to_remove and i % (num_frames_to_skip+1) == 0]
+    frames_to_keep[0].save(output_path, save_all=True, append_images=frames_to_keep[1:], loop=0)
+
+
 if __name__ == "__main__":
-    env = Q_Environment("./sim/SMART-AUVs_OF-June-1c-0002.nc")
-    agent = Q_Agent(env)
-    trainer = Q_trainer.Q_trainer(env)
-    trainer.train(lawnmover_size=50)
-    agent.run(lawnmower_size=50, max_steps=2000)
-    animate_lawnmower_and_actions(env, agent)
+    from Q_Agent import Q_Agent
+    from Q_environment import Q_Environment
+    from policy_funcs import episilon_greedy
+    from Q_simulator import load_q_table
+
+    remove_frames_from_gif(Path(r".\results\gifs\actions.gif"), r".\results\gifs\actions3.gif", list(range(600)) + list(range(1750, 4000)))
+    #env = Q_Environment(r"sim\SMART-AUVs_OF-June-1c-0002.nc", depth=66)
+    #agent = Q_Agent(env, policy=episilon_greedy)
+    #agent.q_table = load_q_table(r"results\q_tables\q_tables_by_episodes\episilon_greedy\episode_49_reward_trace_area_depth_67_lawn_size_50.pkl")
+    #agent.run(max_steps=5000)
+    #lawnmover_name = None # Path(r'.\results\gifs\lawnmover.gif')
+    #action_name = None # Path(r'.\results\gifs\actions.gif')
+    #sprite_path = None
+    #print("starting animating")
+    ## animate_agent_behavior(agent.lawnmover_actions, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=lawnmover_name, sprite_path=sprite_path)
+    #animate_agent_behavior(agent.actions_performed, r"sim\SMART-AUVs_OF-June-1c-0002.nc", 0, 66, gif_name=action_name, sprite_path=sprite_path)
