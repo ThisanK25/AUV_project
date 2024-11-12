@@ -72,11 +72,11 @@ def run_experiments() -> None:
     total_training_runs = 10 * 6 * 2 * 2 
     with tqdm(total=total_training_runs, ncols=100, desc=f'Training runs completed', bar_format='{l_bar}{bar} \033[94m [elapsed: {elapsed} remaining: {remaining}]'
                 , colour='green', position=0) as pbar:
-        for reward_func in [reward_trace_area, reward_gas_level]:
-            for policy_func in [episilon_greedy, soft_max]:
-                for depth in range(64, 70):
-                    env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
-                    for size in reversed((10, 20, 30, 40, 50, 60, 70, 80, 90, 100)):
+        for depth in range(64, 70):
+            env = Q_Environment(Path(r"./sim/SMART-AUVs_OF-June-1c-0002.nc"), depth=depth, x_bounds=(0, 250), y_bounds=(0, 250))
+            for reward_func in [reward_trace_area, reward_gas_level]:
+                for policy_func in [episilon_greedy, soft_max]:
+                    for size in (10, 20, 30, 40, 50, 60, 70, 80, 90, 100):
                         trainer = Q_trainer(env)
                         trainer.train(episodes=episodes, max_steps_per_episode=max_steps_per_episode, lawnmover_size=size, reward_func = reward_func, policy=policy_func, store_q_table_by_episode=False)
                         reward_func_name: str = reward_func.__name__
