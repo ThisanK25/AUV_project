@@ -26,11 +26,7 @@ class Q_Agent:
         # I prefere this setup with the callables as arguments
         self._reward_function: Callable[..., int] = reward_func
         self._policy = policy
-       
-        # I dont like these.
-        self._time_steps_in_high: int   = 0
-        self._time_steps_in_medium: int = 0
-
+        
         # metadata
         self._env: Q_Environment = env
         self._position: tuple[int, int, int] = start_position if start_position else env.lower_left_corner

@@ -17,6 +17,11 @@ def reward_exposure_time(agent, next_state) -> int:
     """
     Longer exposure to high or medium gas readings increases the reward.
     """
+    if not hasattr(agent, "time_steps_in_high"):
+        # Sets the attributes needed.
+        agent.time_steps_in_high = 0
+        agent.time_steps_in_medium = 0
+
     max_val = np.max(next_state)
     if max_val == PH_Reading.LOW:
         agent.time_steps_in_high += 1
