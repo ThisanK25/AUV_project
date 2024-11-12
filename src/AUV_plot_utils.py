@@ -44,7 +44,7 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
         fig, _ = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
         
     x_coords, y_coords = zip(*position_history)
-    ax.plot(x_coords, y_coords, marker='-k', color='black', label='Agent Path')
+    ax.plot(x_coords, y_coords, marker='k-', color='black', label='Agent Path')
     
     # Add labels and title
     ax.set_xlabel('Easting [m]')
