@@ -44,7 +44,7 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
         fig, _ = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
         
     x_coords, y_coords = zip(*position_history)
-    ax.plot(x_coords, y_coords, marker='k-', color='black', label='Agent Path')
+    ax.plot(x_coords, y_coords, marker=',', color='black', label='Agent Path')
     
     # Add labels and title
     ax.set_xlabel('Easting [m]')
@@ -66,7 +66,7 @@ def plot_gas_accuracy_vs_episodes(ax, episodes_trained, gas_accuracy):
     if len(episodes_trained) != len(gas_accuracy):
         raise ValueError(f"Episodes trained does not match gas accuracy {len(episodes_trained)=} {len(gas_accuracy)=}")
     
-    ax.plot(episodes_trained, gas_accuracy, marker='o', linestyle='-', color='b')
+    ax.plot(episodes_trained, gas_accuracy, marker=',', linestyle='-', color='b')
     ax.set_xlabel('Episodes Trained')
     ax.set_ylabel('Gas Accuracy')
     ax.set_title('Gas Accuracy vs Episodes Trained')
