@@ -63,7 +63,7 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
         if ax is None:
             plt.show()  
 
-def combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes, chemical_file_path = r"sim\SMART-AUVs_OF-June-1c-0002.nc", figure_name = None) -> None:
+def combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes, chemical_file_path = Path(r"sim\SMART-AUVs_OF-June-1c-0002.nc"), figure_name = None) -> None:
     
     fig, axs = plt.subplots(1, 4, figsize=(20, 5))
     axs[0].plot(episodes, gas_accuracies, label='Gas Accuracy')
