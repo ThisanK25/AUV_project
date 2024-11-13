@@ -186,19 +186,19 @@ def plot_results(reward_func, policy_func, lawn_size, plot_depth, training_depth
     episodes_numbers_to_plot: list[int] = [0, random.choice(range(1, len(q_tables))), len(q_tables)] 
     agents_behaviours_to_plot: list[list[tuple[int, int, int]]] = []
     with tqdm(total=len(q_tables), ncols=100, desc="Testing agents ", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red', position=0) as pbar:
+        sim_file = list(fetch_sim_files())[1]
+        env = Q_Environment(sim_file, depth=plot_depth)
+        sim = Q_Simulator(env)
         for idx, q_table  in enumerate(q_tables, start=1):
-            env = Q_Environment(list(fetch_sim_files())[0], depth=plot_depth)
-            sim = Q_Simulator(env)
             gas_accuracy: float = sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table)
             episodes.append(idx)
             gas_accuracies.append(gas_accuracy)
             if idx in episodes_numbers_to_plot:
                 agents_behaviours_to_plot.append(sim.agent.position_history)
             pbar.update(1)
-        combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, plot_depth, episodes)
+        combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, plot_depth, episodes, sim_file)
 
 
 
 if __name__ == "__main__":
-
     plot_results(reward_funcs.reward_gas_level, policy_funcs.episilon_greedy, 60, 65, 66)
