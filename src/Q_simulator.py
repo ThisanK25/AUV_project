@@ -1,5 +1,6 @@
 from pathlib import Path
 import pickle
+import random
 
 import numpy as np
 import reward_funcs
@@ -176,21 +177,24 @@ def read_and_store_sim_files() -> None:
 def plot_results() -> None:
     # TODO
     q_tables_dir = Path('results/q_tables')
-    q_table_files = [f for f in q_tables_dir.iterdir() if f.is_file() and f.name.startswith('episode')]
+    q_table_files: list[Path] = [f for f in q_tables_dir.iterdir() if f.is_file() and f.name.startswith('episode')]
     
     # Initialize lists to store episodes and gas accuracies
     episodes = []
     gas_accuracies = []
+    episodes_numbers_to_plot: list[int] = [0, random.randint(1, len(q_table_files)-1, len(q_table_files))] 
+    agents_behaviours_to_plot: list[list[tuple[int, int, int]]] = []
 
-    for q_table_file in q_table_files:
+    for idx, q_table_file in enumerate(q_table_files):
         episode_number = int(q_table_file.stem.split('_')[1])
         q_table = load_q_table(q_table_file)
         env = Q_Environment(list(fetch_sim_files())[0], depth=65)
         sim = Q_Simulator(env)
-        gas_accuracy = sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table)
-
+        gas_accuracy: float = sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table)
         episodes.append(episode_number)
         gas_accuracies.append(gas_accuracy)
+        if idx in episodes_numbers_to_plot:
+            agents_behaviours_to_plot.append(sim.agent.position_history)
 
     # Sort episodes and gas accuracies
     sorted_indices = sorted(range(len(episodes)), key=lambda k: episodes[k])
@@ -207,7 +211,6 @@ def plot_results() -> None:
     axs[0].set_title('Gas Accuracy vs. Episodes')
 
     # Bottom Plot: Agent Behavior for Specific Episodes
-    specific_episodes = [1, 25, 50]
     for idx, specific_episode in enumerate(specific_episodes):
         q_table_filename = f'episode_{specific_episode}_reward_trace_area_episilon_greedy_lawn_size_50'
         q_table_path = q_tables_dir / q_table_filename
@@ -235,7 +238,6 @@ def run_tests() -> None:
     depth = 65
     env = Q_Environment(list(fetch_sim_files())[0], depth)
     sim = Q_Simulator(env)
-    print(sim._gas_coords)
     gas_accuracy = []
     agent_behavior: list[list] = []
     for q_table in q_tables_by_episode:
