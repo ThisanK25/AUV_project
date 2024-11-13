@@ -63,19 +63,9 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
         if ax is None:
             plt.show()  
 
-def plot_gas_accuracy_vs_episodes(ax, episodes_trained, gas_accuracy):
-    if len(episodes_trained) != len(gas_accuracy):
-        raise ValueError(f"Episodes trained does not match gas accuracy {len(episodes_trained)=} {len(gas_accuracy)=}")
+def combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes, chemical_file_path = r"sim\SMART-AUVs_OF-June-1c-0002.nc", figure_name = None) -> None:
     
-    ax.plot(episodes_trained, gas_accuracy, marker=',', linestyle='-', color='b')
-    ax.set_xlabel('Episodes Trained')
-    ax.set_ylabel('Gas Accuracy')
-    ax.set_title('Gas Accuracy vs Episodes Trained')
-    ax.grid(True)
-
-def combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes, chemical_file_path = r"sim\SMART-AUVs_OF-June-1c-0002.nc") -> None:
     fig, axs = plt.subplots(1, 4, figsize=(20, 5))
-    # Plot gas accuracies by episodes
     axs[0].plot(episodes, gas_accuracies, label='Gas Accuracy')
     axs[0].set_xlabel('Episode')
     axs[0].set_ylabel('Gas Accuracy')
@@ -83,19 +73,23 @@ def combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth,
     axs[0].legend()
     axs[0].grid(True)
 
-    # Plot the three selected behaviours
     for idx, behaviour in enumerate(agents_behaviours_to_plot, start=1):
         plot_agent_behavior(behaviour, chemical_file_path=chemical_file_path, time_target=0, z_target=depth, data_parameter='pH', ax=axs[idx])
         axs[idx].set_title(f'Agent Behavior: Episode {episodes[idx-1]}')
 
     plt.tight_layout()
-    plt.show()
+    if figure_name:
+        figure_name = Path(figure_name)
+        figure_name.parent.mkdir(exist_ok=True, parents=True)
+        plt.savefig(figure_name)
+    else:
+        plt.show()
 
 
 def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', gif_name=None, interval=100, sprite_path=None) -> None:
     """
     Animates the agens behaviour. 
-    !!! Saving the animations is a very intensive task. Running it without storing is fairly quick.!!!
+    !!! Saving the animations is a very intensive task. Running it without storing is fairly quick. !!!
     The sprite was supposed to move along the path, but it is currently not working as expected.
     """
     fig, ax = draw_environment(chemical_file_path, time_target, z_target, data_parameter)
@@ -113,7 +107,7 @@ def animate_agent_behavior(position_history, chemical_file_path, time_target, z_
     sprite_artist = AnnotationBbox(sprite_offset_image, (x_coords[0], y_coords[0]), frameon=False)
     ax.add_artist(sprite_artist)    
 
-    def update(frame):
+    def update(frame)->list:
         agent_path.set_data(x_coords[:frame+1], y_coords[:frame+1])
         sprite_artist.xy = (x_coords[frame], y_coords[frame])
         return [agent_path, sprite_artist]
