@@ -1,4 +1,5 @@
 from pathlib import Path
+import random
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 from matplotlib.axes import Axes
@@ -72,40 +73,24 @@ def plot_gas_accuracy_vs_episodes(ax, episodes_trained, gas_accuracy):
     ax.set_title('Gas Accuracy vs Episodes Trained')
     ax.grid(True)
 
-def run_tests_and_plot_3_episodes_combined(gas_accuracy:list[float], agent_behavior:list[int], z_target:int, q_table_names, time_target:int=0, 
-                                                  episodes_to_plot=None, chemical_file_path = Path(r"sim\SMART-AUVs_OF-June-1c-0002.nc")) -> None:
-    from random import randint
-    if len(gas_accuracy) < 3:
-        raise ValueError("Number of episodes must be at least 3")
+def combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes, chemical_file_path = r"sim\SMART-AUVs_OF-June-1c-0002.nc") -> None:
+    fig, axs = plt.subplots(1, 4, figsize=(20, 5))
+    # Plot gas accuracies by episodes
+    axs[0].plot(episodes, gas_accuracies, label='Gas Accuracy')
+    axs[0].set_xlabel('Episode')
+    axs[0].set_ylabel('Gas Accuracy')
+    axs[0].set_title('Gas Accuracy by Episode')
+    axs[0].legend()
+    axs[0].grid(True)
 
-
-    if episodes_to_plot is None:
-        episodes_to_plot: list[int] = [0, randint(1, len(gas_accuracy)-1), len(gas_accuracy)-1]
-    episodes: list[int] = [len(gas_accuracy)]
-
-    figure_names = [q_table_names[i] for i in episodes_to_plot]
-    fig = plt.figure(figsize=(16, 20))
-    gs = GridSpec(4, 1, height_ratios=[1, 1, 1, 1.5])
-
-    # Plot gas accuracy on the top
-    ax_gas_accuracy = fig.add_subplot(gs[0, 0])
-    plot_gas_accuracy_vs_episodes(ax_gas_accuracy, episodes, gas_accuracy)
-
-    for i, episode in enumerate(episodes_to_plot):
-        if episode < len(agent_behavior):
-            ax_agent_behavior = fig.add_subplot(gs[i + 1, 0])
-            figure_name = figure_names[i]
-            plot_agent_behavior(agent_behavior[episode], chemical_file_path, time_target, z_target, figure_name=figure_name, ax=ax_agent_behavior)
-        else:
-            print(f"Episode {episode} not available. Maximum available episode is {len(agent_behavior)-1}.")
+    # Plot the three selected behaviours
+    for idx, behaviour in enumerate(agents_behaviours_to_plot, start=1):
+        plot_agent_behavior(behaviour, chemical_file_path=chemical_file_path, time_target=0, z_target=depth, data_parameter='pH', ax=axs[idx])
+        axs[idx].set_title(f'Agent Behavior: Episode {episodes[idx-1]}')
 
     plt.tight_layout()
-
-    plt.savefig(figure_name)
-    plt.close()
-    print(f"Saved figure: {figure_name}")
-    
     plt.show()
+
 
 def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', gif_name=None, interval=100, sprite_path=None) -> None:
     """
