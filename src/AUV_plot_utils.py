@@ -63,28 +63,9 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
         if ax is None:
             plt.show()  
 
-def combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes, chemical_file_path = r"sim\SMART-AUVs_OF-June-1c-0002.nc", figure_name = None) -> None:
-    
-    fig, axs = plt.subplots(1, 4, figsize=(20, 5))
-    axs[0].plot(episodes, gas_accuracies, label='Gas Accuracy')
-    axs[0].set_xlabel('Episode')
-    axs[0].set_ylabel('Gas Accuracy')
-    axs[0].set_title('Gas Accuracy by Episode')
-    axs[0].legend()
-    axs[0].grid(True)
-
+def plot_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes, chemical_file_path = r"sim\SMART-AUVs_OF-June-1c-0002.nc", figure_name = None) -> None:
     for idx, behaviour in enumerate(agents_behaviours_to_plot, start=1):
-        plot_agent_behavior(behaviour, chemical_file_path=chemical_file_path, time_target=0, z_target=depth, data_parameter='pH', ax=axs[idx])
-        axs[idx].set_title(f'Agent Behavior: Episode {episodes[idx-1]}')
-
-    plt.tight_layout()
-    if figure_name:
-        figure_name = Path(figure_name)
-        figure_name.parent.mkdir(exist_ok=True, parents=True)
-        plt.savefig(figure_name)
-    else:
-        plt.show()
-
+        plot_agent_behavior(behaviour, chemical_file_path=chemical_file_path, time_target=0, z_target=depth, data_parameter='pH', figure_name=f"test{idx}.png")
 
 def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', gif_name=None, interval=100, sprite_path=None) -> None:
     """
