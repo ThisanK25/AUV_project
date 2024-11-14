@@ -196,8 +196,10 @@ def plot_results(reward_func, policy_func, lawn_size, plot_depth, training_depth
             if idx in episodes_numbers_to_plot:
                 agents_behaviours_to_plot.append(sim.agent.position_history)
             pbar.update(1)
-        figure_name = f'./results/by_episode/{reward_func.__name__}_{policy_func.__name__}'
+        figure_name = Path(f'./results/by_episode/{reward_func.__name__}_{policy_func.__name__}')
         plot_by_episodes(gas_accuracies, agents_behaviours_to_plot, plot_depth, episodes, sim_file, figure_name=figure_name)
+
+        
 
 
 
