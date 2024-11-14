@@ -200,4 +200,4 @@ def plot_results(reward_func, policy_func, lawn_size, plot_depth, training_depth
         plot_by_episodes(gas_accuracies, agents_behaviours_to_plot, plot_depth, episodes, sim_file, figure_name=figure_name)
 
 if __name__ == "__main__":
-    plot_results(reward_funcs.reward_gas_level, policy_funcs.soft_max, 70, 67, 66)
+    plot_results(reward_funcs.reward_gas_level, policy_funcs.soft_max, 70, 65, 66)
