@@ -78,7 +78,7 @@ def plot_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes,
     else:
         plt.show()
         plt.close()
-    for idx, behaviour in enumerate(agents_behaviours_to_plot, start=1):
+    for idx, behaviour in enumerate(agents_behaviours_to_plot):
         plot_agent_behavior(behaviour, chemical_file_path=chemical_file_path, time_target=0, z_target=depth, data_parameter='pH', figure_name=f'{figure_name}_{idx}.png')
 
 def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', gif_name=None, interval=100, sprite_path=None) -> None:
