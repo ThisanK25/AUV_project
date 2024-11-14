@@ -65,14 +65,15 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
 
 def plot_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes, chemical_file_path = r"sim\SMART-AUVs_OF-June-1c-0002.nc", figure_name = None) -> None:
     plt.plot(episodes, gas_accuracies, label='Gas Accuracy')
-    plt.set_xlabel('Episode')
-    plt.set_ylabel('Gas Accuracy')
-    plt.set_title('Gas Accuracy by Episode')
+    plt.xlabel('Episode')
+    plt.ylabel('Gas Accuracy')
+    plt.title('Gas Accuracy by Episode')
     plt.legend()
+
     if figure_name:
-        figure_name = Path(figure_name + "_gas_plot.png")
-        figure_name.parent.mkdir(exist_ok=True, parents=True)
-        plt.savefig(figure_name + "_gas_plot.png")
+        plot_name = Path(figure_name + "_gas_plot.png")
+        plot_name.parent.mkdir(exist_ok=True, parents=True)
+        plt.savefig(plot_name)
         plt.close()
     else:
         plt.show()

@@ -186,7 +186,7 @@ def plot_results(reward_func, policy_func, lawn_size, plot_depth, training_depth
     episodes_numbers_to_plot: list[int] = [0, random.choice(range(1, len(q_tables))), len(q_tables)] 
     agents_behaviours_to_plot: list[list[tuple[int, int, int]]] = []
     with tqdm(total=len(q_tables), ncols=100, desc="Testing agents ", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red', position=0) as pbar:
-        sim_file = list(fetch_sim_files())[1]
+        sim_file = list(fetch_sim_files())[0]
         env = Q_Environment(sim_file, depth=plot_depth)
         sim = Q_Simulator(env)
         for idx, q_table  in enumerate(q_tables, start=1):
@@ -196,7 +196,7 @@ def plot_results(reward_func, policy_func, lawn_size, plot_depth, training_depth
             if idx in episodes_numbers_to_plot:
                 agents_behaviours_to_plot.append(sim.agent.position_history)
             pbar.update(1)
-        figure_name = Path(f'./results/by_episode/{reward_func.__name__}_{policy_func.__name__}')
+        figure_name = fr'./results/by_episode/{reward_func.__name__}_{policy_func.__name__}'
         plot_by_episodes(gas_accuracies, agents_behaviours_to_plot, plot_depth, episodes, sim_file, figure_name=figure_name)
 
         
