@@ -65,7 +65,7 @@ def plot_agent_behavior(position_history, chemical_file_path, time_target, z_tar
 
 def plot_by_episodes(gas_accuracies, agents_behaviours_to_plot, depth, episodes, chemical_file_path = r"sim\SMART-AUVs_OF-June-1c-0002.nc", figure_name = None) -> None:
     for idx, behaviour in enumerate(agents_behaviours_to_plot, start=1):
-        plot_agent_behavior(behaviour, chemical_file_path=chemical_file_path, time_target=0, z_target=depth, data_parameter='pH', figure_name=f"test{idx}.png")
+        plot_agent_behavior(behaviour, chemical_file_path=chemical_file_path, time_target=0, z_target=depth, data_parameter='pH', figure_name=f'{figure_name}_{idx}.png')
 
 def animate_agent_behavior(position_history, chemical_file_path, time_target, z_target, data_parameter='pH', gif_name=None, interval=100, sprite_path=None) -> None:
     """
