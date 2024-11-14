@@ -186,7 +186,7 @@ def plot_results(reward_func, policy_func, lawn_size, plot_depth, training_depth
     episodes_numbers_to_plot: list[int] = [0, random.choice(range(1, len(q_tables))), len(q_tables)] 
     agents_behaviours_to_plot: list[list[tuple[int, int, int]]] = []
     with tqdm(total=len(q_tables), ncols=100, desc="Testing agents ", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red', position=0) as pbar:
-        sim_file = list(fetch_sim_files())[0]
+        sim_file = list(fetch_sim_files())[0]  # 0 is 003.nc, 1 is 002.nc
         env = Q_Environment(sim_file, depth=plot_depth)
         sim = Q_Simulator(env)
         for idx, q_table  in enumerate(q_tables, start=1):
