@@ -189,8 +189,8 @@ def plot_results(reward_func, policy_func, lawn_size, plot_depth, training_depth
         sim_file = list(fetch_sim_files())[1]
         env = Q_Environment(sim_file, depth=plot_depth)
         sim = Q_Simulator(env)
-        for idx, q_table  in enumerate(q_tables):
-            gas_accuracy: float = sim.test_agent(reward_func=reward_func, policy=policy_func, q_table=q_table, max_steps=500)
+        for idx, q_table  in enumerate(q_tables, start=1):
+            gas_accuracy: float = sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table)
             episodes.append(idx)
             gas_accuracies.append(gas_accuracy)
             if idx in episodes_numbers_to_plot:
