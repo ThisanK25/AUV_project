@@ -183,14 +183,14 @@ def plot_results(reward_func, policy_func, lawn_size, plot_depth, training_depth
     q_tables = list(load_q_tables_sorted_by_episode(reward_func, policy_func, lawn_size, training_depth))
     episodes = []
     gas_accuracies = []
-    episodes_numbers_to_plot: list[int] = [0, random.choice(range(1, len(q_tables))), len(q_tables)] 
+    episodes_numbers_to_plot: list[int] = [0, random.choice(range(1, len(q_tables)-1)), len(q_tables)-1] 
     agents_behaviours_to_plot: list[list[tuple[int, int, int]]] = []
     with tqdm(total=len(q_tables), ncols=100, desc="Testing agents ", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red', position=0) as pbar:
         sim_file = list(fetch_sim_files())[0]
         env = Q_Environment(sim_file, depth=plot_depth)
         sim = Q_Simulator(env)
-        for idx, q_table  in enumerate(q_tables, start=1):
-            gas_accuracy: float = sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.soft_max, q_table=q_table, max_steps=500)
+        for idx, q_table  in enumerate(q_tables):
+            gas_accuracy: float = np.average([sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.soft_max, q_table=q_table, max_steps=500) for _ in range(1000)])
             episodes.append(idx)
             gas_accuracies.append(gas_accuracy)
             if idx in episodes_numbers_to_plot:
