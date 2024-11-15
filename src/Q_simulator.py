@@ -183,22 +183,21 @@ def plot_results(reward_func, policy_func, lawn_size, plot_depth, training_depth
     q_tables = list(load_q_tables_sorted_by_episode(reward_func, policy_func, lawn_size, training_depth))
     episodes = []
     gas_accuracies = []
-    episodes_numbers_to_plot: list[int] = [0, random.choice(range(1, len(q_tables))), len(q_tables)] 
+    episodes_numbers_to_plot: list[int] = [0, random.choice(range(1, len(q_tables)-1)), len(q_tables)-1] 
     agents_behaviours_to_plot: list[list[tuple[int, int, int]]] = []
     with tqdm(total=len(q_tables), ncols=100, desc="Testing agents ", bar_format='\033[0m{l_bar}{bar} \033[91m [elapsed: {elapsed} remaining: {remaining}]', colour='red', position=0) as pbar:
-        for idx, q_table  in enumerate(q_tables, start=1):
-            env = Q_Environment(list(fetch_sim_files())[0], depth=plot_depth)
-            sim = Q_Simulator(env)
-            gas_accuracy: float = sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.episilon_greedy, q_table=q_table)
+        sim_file = list(fetch_sim_files())[0]  # 0 is 003.nc, 1 is 002.nc
+        env = Q_Environment(sim_file, depth=plot_depth)
+        sim = Q_Simulator(env)
+        for idx, q_table  in enumerate(q_tables):
+            gas_accuracy: float = np.average([sim.test_agent(reward_func=reward_funcs.reward_trace_area, policy=policy_funcs.soft_max, q_table=q_table, max_steps=500) for _ in range(1000)])
             episodes.append(idx)
             gas_accuracies.append(gas_accuracy)
             if idx in episodes_numbers_to_plot:
                 agents_behaviours_to_plot.append(sim.agent.position_history)
             pbar.update(1)
-        combined_plots_by_episodes(gas_accuracies, agents_behaviours_to_plot, plot_depth, episodes)
-
-
+        figure_name: str = fr'./results/by_episode/{reward_func.__name__}_{policy_func.__name__}'
+        plot_by_episodes(gas_accuracies, agents_behaviours_to_plot, plot_depth, episodes, sim_file, figure_name=figure_name)
 
 if __name__ == "__main__":
-
-    plot_results(reward_funcs.reward_gas_level, policy_funcs.episilon_greedy, 60, 65, 66)
+    plot_results(reward_funcs.reward_gas_level, policy_funcs.soft_max, 70, 65, 66)
